@@ -38,23 +38,22 @@ class Tests_Shortcode extends WP_UnitTestCase {
 
 	// [footag foo="bar"]
 	function _shortcode_footag( $atts ) {
-		return @"foo = {$atts['foo']}";
+		$foo = isset( $atts['foo'] ) ? $atts['foo'] : '';
+		return "foo = $foo";
 	}
 
 	// [bartag foo="bar"]
 	function _shortcode_bartag( $atts ) {
-		extract(
-			shortcode_atts(
-				array(
-					'foo' => 'no foo',
-					'baz' => 'default baz',
-				),
-				$atts,
-				'bartag'
-			)
+		$processed_atts = shortcode_atts(
+			array(
+				'foo' => 'no foo',
+				'baz' => 'default baz',
+			),
+			$atts,
+			'bartag'
 		);
 
-		return "foo = {$foo}";
+		return "foo = {$processed_atts['foo']}";
 	}
 
 	// [baztag]content[/baztag]
@@ -446,7 +445,7 @@ EOF;
 	// Filter shortcode atts in various ways
 	function _filter_atts2( $out, $pairs, $atts ) {
 		// If foo attribute equals "foo1", change it to be default value
-		if ( isset( $out['foo'] ) && 'foo1' == $out['foo'] ) {
+		if ( isset( $out['foo'] ) && 'foo1' === $out['foo'] ) {
 			$out['foo'] = $pairs['foo'];
 		}
 
@@ -561,8 +560,8 @@ EOF;
 				'<[gallery]>',
 			),
 			array(
-				'<div style="background:url([[gallery]])">',
-				'<div style="background:url([[gallery]])">',
+				'<div style="selector:url([[gallery]])">',
+				'<div style="selector:url([[gallery]])">',
 			),
 			array(
 				'[gallery]<div>Hello</div>[/gallery]',

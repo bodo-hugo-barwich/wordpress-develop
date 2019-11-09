@@ -66,7 +66,7 @@ Attachment = View.extend(/** @lends wp.media.view.Attachment.prototype */{
 			this.details( this.model, this.controller.state().get('selection') );
 		}
 
-		this.listenTo( this.controller, 'attachment:compat:waiting attachment:compat:ready', this.updateSave );
+		this.listenTo( this.controller.states, 'attachment:compat:waiting attachment:compat:ready', this.updateSave );
 	},
 	/**
 	 * @returns {wp.media.view.Attachment} Returns itself to allow chaining
@@ -509,6 +509,9 @@ Attachment = View.extend(/** @lends wp.media.view.Attachment.prototype */{
 		} else {
 			selection.add( this.model );
 		}
+
+		// Trigger an action button update.
+		this.controller.trigger( 'selection:toggle' );
 	}
 });
 

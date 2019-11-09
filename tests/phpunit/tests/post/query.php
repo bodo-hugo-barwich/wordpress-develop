@@ -174,6 +174,42 @@ class Tests_Post_Query extends WP_UnitTestCase {
 		$this->assertSame( $ordered, wp_list_pluck( $q->posts, 'ID' ) );
 	}
 
+	/**
+	 * @ticket 38034
+	 */
+	public function test_orderby_post__in_array() {
+		$posts = self::factory()->post->create_many( 4 );
+
+		$ordered = array( $posts[2], $posts[0], $posts[3] );
+
+		$q = new WP_Query(
+			array(
+				'post_type' => 'any',
+				'post__in'  => $ordered,
+				'orderby'   => array( 'post__in' => 'ASC' ),
+			)
+		);
+		$this->assertSame( $ordered, wp_list_pluck( $q->posts, 'ID' ) );
+	}
+
+	/**
+	 * @ticket 38034
+	 */
+	public function test_orderby_post__in_array_with_implied_order() {
+		$posts = self::factory()->post->create_many( 4 );
+
+		$ordered = array( $posts[2], $posts[0], $posts[3] );
+
+		$q = new WP_Query(
+			array(
+				'post_type' => 'any',
+				'post__in'  => $ordered,
+				'orderby'   => 'post__in',
+			)
+		);
+		$this->assertSame( $ordered, wp_list_pluck( $q->posts, 'ID' ) );
+	}
+
 	function test_post__in_attachment_ordering() {
 		$post_id    = self::factory()->post->create();
 		$att_ids    = array();
@@ -669,11 +705,6 @@ class Tests_Post_Query extends WP_UnitTestCase {
 	 * @dataProvider set_found_posts_provider
 	 */
 	public function test_set_found_posts_not_posts_as_an_array( $posts, $expected ) {
-		if ( version_compare( PHP_VERSION, '5.3', '<' ) ) {
-			$this->markTestSkipped( 'ReflectionMethod::setAccessible is only available in PHP 5.3+' );
-			return;
-		}
-
 		$q = new WP_Query(
 			array(
 				'post_type'      => 'wptests_pt',
@@ -683,7 +714,7 @@ class Tests_Post_Query extends WP_UnitTestCase {
 
 		$q->posts = $posts;
 
-		$methd = new \ReflectionMethod( 'WP_Query', 'set_found_posts' );
+		$methd = new ReflectionMethod( 'WP_Query', 'set_found_posts' );
 		$methd->setAccessible( true );
 		$methd->invoke( $q, array( 'no_found_rows' => false ), array() );
 

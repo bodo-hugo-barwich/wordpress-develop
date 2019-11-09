@@ -82,14 +82,24 @@ class WP_Admin_Bar {
 	}
 
 	/**
-	 * @param array $node
+	 * Add a node (menu item) to the Admin Bar menu.
+	 *
+	 * @since 3.3.0
+	 * @since 5.4.0 Deprecated in favor of {@see WP_Admin_Bar::add_node()}.
+	 *
+	 * @param array $node The attributes that define the node.
 	 */
 	public function add_menu( $node ) {
 		$this->add_node( $node );
 	}
 
 	/**
-	 * @param string $id
+	 * Remove a node from the admin bar.
+	 *
+	 * @since 3.1.0
+	 * @since 5.4.0 Deprecated in favor of {@see WP_Admin_Bar::remove_node()}.
+	 *
+	 * @param string $id The menu slug to remove.
 	 */
 	public function remove_menu( $id ) {
 		$this->remove_node( $id );
@@ -115,8 +125,8 @@ class WP_Admin_Bar {
 	 */
 	public function add_node( $args ) {
 		// Shim for old method signature: add_node( $parent_id, $menu_obj, $args )
-		if ( func_num_args() >= 3 && is_string( func_get_arg( 0 ) ) ) {
-			$args = array_merge( array( 'parent' => func_get_arg( 0 ) ), func_get_arg( 2 ) );
+		if ( func_num_args() >= 3 && is_string( $args ) ) {
+			$args = array_merge( array( 'parent' => $args ), func_get_arg( 2 ) );
 		}
 
 		if ( is_object( $args ) ) {
@@ -144,7 +154,8 @@ class WP_Admin_Bar {
 		);
 
 		// If the node already exists, keep any data that isn't provided.
-		if ( $maybe_defaults = $this->get_node( $args['id'] ) ) {
+		$maybe_defaults = $this->get_node( $args['id'] );
+		if ( $maybe_defaults ) {
 			$defaults = get_object_vars( $maybe_defaults );
 		}
 
@@ -180,10 +191,11 @@ class WP_Admin_Bar {
 	 * Gets a node.
 	 *
 	 * @param string $id
-	 * @return object Node.
+	 * @return object|void Node.
 	 */
 	final public function get_node( $id ) {
-		if ( $node = $this->_get_node( $id ) ) {
+		$node = $this->_get_node( $id );
+		if ( $node ) {
 			return clone $node;
 		}
 	}
@@ -210,7 +222,8 @@ class WP_Admin_Bar {
 	 * @return array|void
 	 */
 	final public function get_nodes() {
-		if ( ! $nodes = $this->_get_nodes() ) {
+		$nodes = $this->_get_nodes();
+		if ( ! $nodes ) {
 			return;
 		}
 
@@ -312,7 +325,8 @@ class WP_Admin_Bar {
 			}
 
 			// Fetch the parent node. If it isn't registered, ignore the node.
-			if ( ! $parent = $this->_get_node( $node->parent ) ) {
+			$parent = $this->_get_node( $node->parent );
+			if ( ! $parent ) {
 				continue;
 			}
 
@@ -438,7 +452,7 @@ class WP_Admin_Bar {
 			<?php if ( ! is_admin() ) { ?>
 				<a class="screen-reader-shortcut" href="#wp-toolbar" tabindex="1"><?php _e( 'Skip to toolbar' ); ?></a>
 			<?php } ?>
-			<div class="quicklinks" id="wp-toolbar" role="navigation" aria-label="<?php esc_attr_e( 'Toolbar' ); ?>" tabindex="0">
+			<div class="quicklinks" id="wp-toolbar" role="navigation" aria-label="<?php esc_attr_e( 'Toolbar' ); ?>">
 				<?php
 				foreach ( $root->children as $group ) {
 					$this->_render_group( $group );
@@ -501,14 +515,17 @@ class WP_Admin_Bar {
 			return;
 		}
 
-		$is_parent = ! empty( $node->children );
-		$has_link  = ! empty( $node->href );
+		$is_parent             = ! empty( $node->children );
+		$has_link              = ! empty( $node->href );
+		$is_root_top_item      = 'root-default' === $node->parent;
+		$is_top_secondary_item = 'top-secondary' === $node->parent;
 
 		// Allow only numeric values, then casted to integers, and allow a tabindex value of `0` for a11y.
 		$tabindex        = ( isset( $node->meta['tabindex'] ) && is_numeric( $node->meta['tabindex'] ) ) ? (int) $node->meta['tabindex'] : '';
 		$aria_attributes = ( '' !== $tabindex ) ? ' tabindex="' . $tabindex . '"' : '';
 
 		$menuclass = '';
+		$arrow     = '';
 
 		if ( $is_parent ) {
 			$menuclass        = 'menupop ';
@@ -517,6 +534,11 @@ class WP_Admin_Bar {
 
 		if ( ! empty( $node->meta['class'] ) ) {
 			$menuclass .= $node->meta['class'];
+		}
+
+		// Print the arrow icon for the menu children with children.
+		if ( ! $is_root_top_item && ! $is_top_secondary_item && $is_parent ) {
+			$arrow = '<span class="wp-admin-bar-arrow" aria-hidden="true"></span>';
 		}
 
 		if ( $menuclass ) {
@@ -542,7 +564,7 @@ class WP_Admin_Bar {
 			}
 		}
 
-		echo ">{$node->title}";
+		echo ">{$arrow}{$node->title}";
 
 		if ( $has_link ) {
 			echo '</a>';
@@ -588,6 +610,7 @@ class WP_Admin_Bar {
 		add_action( 'admin_bar_menu', 'wp_admin_bar_my_account_menu', 0 );
 		add_action( 'admin_bar_menu', 'wp_admin_bar_search_menu', 4 );
 		add_action( 'admin_bar_menu', 'wp_admin_bar_my_account_item', 7 );
+		add_action( 'admin_bar_menu', 'wp_admin_bar_recovery_mode_menu', 8 );
 
 		// Site related.
 		add_action( 'admin_bar_menu', 'wp_admin_bar_sidebar_toggle', 0 );

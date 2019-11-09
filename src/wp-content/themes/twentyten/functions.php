@@ -9,11 +9,13 @@
  * The first function, twentyten_setup(), sets up the theme by registering support
  * for various features in WordPress, such as post thumbnails, navigation menus, and the like.
  *
- * When using a child theme (see https://codex.wordpress.org/Theme_Development and
- * https://codex.wordpress.org/Child_Themes), you can override certain functions
- * (those wrapped in a function_exists() call) by defining them first in your child theme's
- * functions.php file. The child theme's functions.php file is included before the parent
- * theme's file, so the child theme functions would be used.
+ * When using a child theme you can override certain functions (those wrapped
+ * in a function_exists() call) by defining them first in your child theme's
+ * functions.php file. The child theme's functions.php file is included before
+ * the parent theme's file, so the child theme functions would be used.
+ *
+ * @link https://developer.wordpress.org/themes/basics/theme-functions/
+ * @link https://developer.wordpress.org/themes/advanced-topics/child-themes/
  *
  * Functions that are not pluggable (not wrapped in function_exists()) are instead attached
  * to a filter or action hook. The hook can be removed by using remove_action() or
@@ -31,7 +33,7 @@
  * }
  * </code>
  *
- * For more information on hooks, actions, and filters, see https://codex.wordpress.org/Plugin_API.
+ * For more information on hooks, actions, and filters, see https://developer.wordpress.org/plugins/.
  *
  * @package WordPress
  * @subpackage Twenty_Ten
@@ -75,6 +77,44 @@ if ( ! function_exists( 'twentyten_setup' ) ) :
 
 		// This theme styles the visual editor with editor-style.css to match the theme style.
 		add_editor_style();
+
+		// Load regular editor styles into the new block-based editor.
+		add_theme_support( 'editor-styles' );
+
+		// Load default block styles.
+		add_theme_support( 'wp-block-styles' );
+
+		// Add support for custom color scheme.
+		add_theme_support(
+			'editor-color-palette',
+			array(
+				array(
+					'name'  => __( 'Blue', 'twentyten' ),
+					'slug'  => 'blue',
+					'color' => '#0066cc',
+				),
+				array(
+					'name'  => __( 'Black', 'twentyten' ),
+					'slug'  => 'black',
+					'color' => '#000',
+				),
+				array(
+					'name'  => __( 'Medium Gray', 'twentyten' ),
+					'slug'  => 'medium-gray',
+					'color' => '#666',
+				),
+				array(
+					'name'  => __( 'Light Gray', 'twentyten' ),
+					'slug'  => 'light-gray',
+					'color' => '#f1f1f1',
+				),
+				array(
+					'name'  => __( 'White', 'twentyten' ),
+					'slug'  => 'white',
+					'color' => '#fff',
+				),
+			)
+		);
 
 		// Post Format support. You can also use the legacy "gallery" or "asides" (note the plural) categories.
 		add_theme_support( 'post-formats', array( 'aside', 'gallery' ) );
@@ -131,7 +171,7 @@ if ( ! function_exists( 'twentyten_setup' ) ) :
 			 *
 			 * @param int The default header image height in pixels. Default 198.
 			 */
-			   'height'           => apply_filters( 'twentyten_header_image_height', 198 ),
+			'height'              => apply_filters( 'twentyten_header_image_height', 198 ),
 			// Support flexible heights.
 			'flex-height'         => true,
 			// Don't support text inside the header image.
@@ -168,49 +208,49 @@ if ( ! function_exists( 'twentyten_setup' ) ) :
 				'berries'       => array(
 					'url'           => '%s/images/headers/berries.jpg',
 					'thumbnail_url' => '%s/images/headers/berries-thumbnail.jpg',
-					/* translators: header image description */
+					/* translators: Header image description. */
 					'description'   => __( 'Berries', 'twentyten' ),
 				),
 				'cherryblossom' => array(
 					'url'           => '%s/images/headers/cherryblossoms.jpg',
 					'thumbnail_url' => '%s/images/headers/cherryblossoms-thumbnail.jpg',
-					/* translators: header image description */
+					/* translators: Header image description. */
 					'description'   => __( 'Cherry Blossoms', 'twentyten' ),
 				),
 				'concave'       => array(
 					'url'           => '%s/images/headers/concave.jpg',
 					'thumbnail_url' => '%s/images/headers/concave-thumbnail.jpg',
-					/* translators: header image description */
+					/* translators: Header image description. */
 					'description'   => __( 'Concave', 'twentyten' ),
 				),
 				'fern'          => array(
 					'url'           => '%s/images/headers/fern.jpg',
 					'thumbnail_url' => '%s/images/headers/fern-thumbnail.jpg',
-					/* translators: header image description */
+					/* translators: Header image description. */
 					'description'   => __( 'Fern', 'twentyten' ),
 				),
 				'forestfloor'   => array(
 					'url'           => '%s/images/headers/forestfloor.jpg',
 					'thumbnail_url' => '%s/images/headers/forestfloor-thumbnail.jpg',
-					/* translators: header image description */
+					/* translators: Header image description. */
 					'description'   => __( 'Forest Floor', 'twentyten' ),
 				),
 				'inkwell'       => array(
 					'url'           => '%s/images/headers/inkwell.jpg',
 					'thumbnail_url' => '%s/images/headers/inkwell-thumbnail.jpg',
-					/* translators: header image description */
+					/* translators: Header image description. */
 					'description'   => __( 'Inkwell', 'twentyten' ),
 				),
 				'path'          => array(
 					'url'           => '%s/images/headers/path.jpg',
 					'thumbnail_url' => '%s/images/headers/path-thumbnail.jpg',
-					/* translators: header image description */
+					/* translators: Header image description. */
 					'description'   => __( 'Path', 'twentyten' ),
 				),
 				'sunset'        => array(
 					'url'           => '%s/images/headers/sunset.jpg',
 					'thumbnail_url' => '%s/images/headers/sunset-thumbnail.jpg',
-					/* translators: header image description */
+					/* translators: Header image description. */
 					'description'   => __( 'Sunset', 'twentyten' ),
 				),
 			)
@@ -383,16 +423,29 @@ if ( ! function_exists( 'twentyten_comment' ) ) :
 		<div id="comment-<?php comment_ID(); ?>">
 			<div class="comment-author vcard">
 				<?php echo get_avatar( $comment, 40 ); ?>
-				<?php printf( __( '%s <span class="says">says:</span>', 'twentyten' ), sprintf( '<cite class="fn">%s</cite>', get_comment_author_link() ) ); ?>
+				<?php
+				/* translators: %s: Author display name. */
+				printf( __( '%s <span class="says">says:</span>', 'twentyten' ), sprintf( '<cite class="fn">%s</cite>', get_comment_author_link() ) );
+				?>
 			</div><!-- .comment-author .vcard -->
-				<?php if ( $comment->comment_approved == '0' ) : ?>
-				<em class="comment-awaiting-moderation"><?php _e( 'Your comment is awaiting moderation.', 'twentyten' ); ?></em>
-				<br />
+
+				<?php
+				$commenter = wp_get_current_commenter();
+				if ( $commenter['comment_author_email'] ) {
+					$moderation_note = __( 'Your comment is awaiting moderation.', 'twentyten' );
+				} else {
+					$moderation_note = __( 'Your comment is awaiting moderation. This is a preview, your comment will be visible after it has been approved.', 'twentyten' );
+				}
+				?>
+
+				<?php if ( '0' == $comment->comment_approved ) : ?>
+			<em class="comment-awaiting-moderation"><?php echo $moderation_note; ?></em>
+			<br />
 			<?php endif; ?>
 
 			<div class="comment-meta commentmetadata"><a href="<?php echo esc_url( get_comment_link( $comment->comment_ID ) ); ?>">
 				<?php
-					/* translators: 1: date, 2: time */
+					/* translators: 1: Date, 2: Time. */
 					printf( __( '%1$s at %2$s', 'twentyten' ), get_comment_date(), get_comment_time() );
 				?>
 					</a>
@@ -548,6 +601,7 @@ if ( ! function_exists( 'twentyten_posted_on' ) ) :
 	 */
 	function twentyten_posted_on() {
 		printf(
+			/* translators: 1: CSS classes, 2: Date, 3: Author display name. */
 			__( '<span class="%1$s">Posted on</span> %2$s <span class="meta-sep">by</span> %3$s', 'twentyten' ),
 			'meta-prep meta-prep-author',
 			sprintf(
@@ -559,6 +613,7 @@ if ( ! function_exists( 'twentyten_posted_on' ) ) :
 			sprintf(
 				'<span class="author vcard"><a class="url fn n" href="%1$s" title="%2$s">%3$s</a></span>',
 				get_author_posts_url( get_the_author_meta( 'ID' ) ),
+				/* translators: %s: Author display name. */
 				esc_attr( sprintf( __( 'View all posts by %s', 'twentyten' ), get_the_author() ) ),
 				get_the_author()
 			)
@@ -576,10 +631,13 @@ if ( ! function_exists( 'twentyten_posted_in' ) ) :
 		// Retrieves tag list of current post, separated by commas.
 		$tag_list = get_the_tag_list( '', ', ' );
 		if ( $tag_list && ! is_wp_error( $tag_list ) ) {
+			/* translators: 1: Category name, 2: Tag name, 3: Post permalink, 4: Post title. */
 			$posted_in = __( 'This entry was posted in %1$s and tagged %2$s. Bookmark the <a href="%3$s" title="Permalink to %4$s" rel="bookmark">permalink</a>.', 'twentyten' );
 		} elseif ( is_object_in_taxonomy( get_post_type(), 'category' ) ) {
+			/* translators: 1: Category name, 3: Post permalink, 4: Post title. */
 			$posted_in = __( 'This entry was posted in %1$s. Bookmark the <a href="%3$s" title="Permalink to %4$s" rel="bookmark">permalink</a>.', 'twentyten' );
 		} else {
+			/* translators: 3: Post permalink, 4: Post title. */
 			$posted_in = __( 'Bookmark the <a href="%3$s" title="Permalink to %4$s" rel="bookmark">permalink</a>.', 'twentyten' );
 		}
 		// Prints the string, replacing the placeholders.
@@ -655,3 +713,43 @@ function twentyten_widget_tag_cloud_args( $args ) {
 	return $args;
 }
 add_filter( 'widget_tag_cloud_args', 'twentyten_widget_tag_cloud_args' );
+
+/**
+ * Enqueue scripts and styles for front end.
+ *
+ * @since Twenty Ten 2.6
+ */
+function twentyten_scripts_styles() {
+	// Theme block stylesheet.
+	wp_enqueue_style( 'twentyten-block-style', get_template_directory_uri() . '/blocks.css', array(), '20181218' );
+}
+add_action( 'wp_enqueue_scripts', 'twentyten_scripts_styles' );
+
+/**
+ * Enqueue styles for the block-based editor.
+ *
+ * @since Twenty Ten 2.6
+ */
+function twentyten_block_editor_styles() {
+	// Block styles.
+	wp_enqueue_style( 'twentyten-block-editor-style', get_template_directory_uri() . '/editor-blocks.css', array(), '20181218' );
+}
+add_action( 'enqueue_block_editor_assets', 'twentyten_block_editor_styles' );
+
+if ( ! function_exists( 'wp_body_open' ) ) :
+	/**
+	 * Fire the wp_body_open action.
+	 *
+	 * Added for backwards compatibility to support pre 5.2.0 WordPress versions.
+	 *
+	 * @since Twenty Ten 2.9
+	 */
+	function wp_body_open() {
+		/**
+		 * Triggered after the opening <body> tag.
+		 *
+		 * @since Twenty Ten 2.9
+		 */
+		do_action( 'wp_body_open' );
+	}
+endif;

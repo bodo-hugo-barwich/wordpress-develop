@@ -13,32 +13,12 @@
 abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 	// You can use your own version of data/WPHTTP-testcase-redirection-script.php here.
 	var $redirection_script = 'http://api.wordpress.org/core/tests/1.0/redirection.php';
-	var $fileStreamUrl      = 'http://s.w.org/screenshots/3.9/dashboard.png';
+	var $file_stream_url    = 'http://s.w.org/screenshots/3.9/dashboard.png';
 
 	protected $http_request_args;
 
-	/**
-	 * Mark test as skipped if the HTTP request times out.
-	 */
-	function skipTestOnTimeout( $response ) {
-		if ( ! is_wp_error( $response ) ) {
-			return;
-		}
-		if ( 'connect() timed out!' === $response->get_error_message() ) {
-			$this->markTestSkipped( 'HTTP timeout' );
-		}
-
-		if ( false !== strpos( $response->get_error_message(), 'timed out after' ) ) {
-			$this->markTestSkipped( 'HTTP timeout' );
-		}
-
-		if ( 0 === strpos( $response->get_error_message(), 'stream_socket_client(): unable to connect to tcp://s.w.org:80' ) ) {
-			$this->markTestSkipped( 'HTTP timeout' );
-		}
-
-	}
-
 	function setUp() {
+		parent::setUp();
 
 		if ( is_callable( array( 'WP_Http', '_getTransport' ) ) ) {
 			$this->markTestSkipped( 'The WP_Http tests require a class-http.php file of r17550 or later.' );
@@ -53,7 +33,7 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 		// Disable all transports aside from this one.
 		foreach ( array( 'curl', 'streams', 'fsockopen' ) as $t ) {
 			remove_filter( "use_{$t}_transport", '__return_false' ); // Just strip them all
-			if ( $t != $this->transport ) {
+			if ( $t !== $this->transport ) {
 				add_filter( "use_{$t}_transport", '__return_false' ); // and add it back if need be..
 			}
 		}
@@ -225,7 +205,7 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 	 * @ticket 11888
 	 */
 	function test_send_headers() {
-		// Test that the headers sent are recieved by the server
+		// Test that the headers sent are received by the server
 		$headers = array(
 			'test1' => 'test',
 			'test2' => 0,
@@ -246,7 +226,7 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 			$headers[ $parts[0] ] = $parts[1];
 		}
 
-		$this->assertTrue( isset( $headers['test1'] ) && 'test' == $headers['test1'] );
+		$this->assertTrue( isset( $headers['test1'] ) && 'test' === $headers['test1'] );
 		$this->assertTrue( isset( $headers['test2'] ) && '0' === $headers['test2'] );
 		// cURL/HTTP Extension Note: Will never pass, cURL does not pass headers with an empty value.
 		// Should it be that empty headers with empty values are NOT sent?
@@ -254,7 +234,7 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 	}
 
 	function test_file_stream() {
-		$url  = $this->fileStreamUrl;
+		$url  = $this->file_stream_url;
 		$size = 153204;
 		$res  = wp_remote_request(
 			$url,
@@ -282,7 +262,7 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 	 * @ticket 26726
 	 */
 	function test_file_stream_limited_size() {
-		$url  = $this->fileStreamUrl;
+		$url  = $this->file_stream_url;
 		$size = 10000;
 		$res  = wp_remote_request(
 			$url,
@@ -311,7 +291,7 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 	 * @ticket 31172
 	 */
 	function test_request_limited_size() {
-		$url  = $this->fileStreamUrl;
+		$url  = $this->file_stream_url;
 		$size = 10000;
 
 		$res = wp_remote_request(

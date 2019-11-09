@@ -4,24 +4,45 @@
  * @group scripts
  */
 class Tests_Dependencies_Styles extends WP_UnitTestCase {
-	var $old_wp_styles;
+	private $old_wp_styles;
+	private $old_wp_scripts;
 
 	function setUp() {
 		parent::setUp();
+
 		if ( empty( $GLOBALS['wp_styles'] ) ) {
 			$GLOBALS['wp_styles'] = null;
 		}
+
 		$this->old_wp_styles = $GLOBALS['wp_styles'];
+
+		if ( empty( $GLOBALS['wp_scripts'] ) ) {
+			$GLOBALS['wp_scripts'] = null;
+		}
+
+		$this->old_wp_styles = $GLOBALS['wp_scripts'];
+
 		remove_action( 'wp_default_styles', 'wp_default_styles' );
 		remove_action( 'wp_print_styles', 'print_emoji_styles' );
+
 		$GLOBALS['wp_styles']                  = new WP_Styles();
 		$GLOBALS['wp_styles']->default_version = get_bloginfo( 'version' );
+
+		$GLOBALS['wp_scripts']                  = new WP_Scripts();
+		$GLOBALS['wp_scripts']->default_version = get_bloginfo( 'version' );
 	}
 
 	function tearDown() {
-		$GLOBALS['wp_styles'] = $this->old_wp_styles;
+		$GLOBALS['wp_styles']  = $this->old_wp_styles;
+		$GLOBALS['wp_scripts'] = $this->old_wp_scripts;
+
 		add_action( 'wp_default_styles', 'wp_default_styles' );
 		add_action( 'wp_print_styles', 'print_emoji_styles' );
+
+		if ( current_theme_supports( 'wp-block-styles' ) ) {
+			remove_theme_support( 'wp-block-styles' );
+		}
+
 		parent::tearDown();
 	}
 
@@ -35,6 +56,7 @@ class Tests_Dependencies_Styles extends WP_UnitTestCase {
 		wp_enqueue_style( 'no-deps-version', 'example.com', array(), 1.2 );
 		wp_enqueue_style( 'no-deps-null-version', 'example.com', array(), null );
 		wp_enqueue_style( 'no-deps-null-version-print-media', 'example.com', array(), null, 'print' );
+
 		$ver       = get_bloginfo( 'version' );
 		$expected  = "<link rel='stylesheet' id='no-deps-no-version-css'  href='http://example.com?ver=$ver' type='text/css' media='all' />\n";
 		$expected .= "<link rel='stylesheet' id='no-deps-version-css'  href='http://example.com?ver=1.2' type='text/css' media='all' />\n";
@@ -45,6 +67,23 @@ class Tests_Dependencies_Styles extends WP_UnitTestCase {
 
 		// No styles left to print
 		$this->assertEquals( '', get_echo( 'wp_print_styles' ) );
+	}
+
+	/**
+	 * @ticket 42804
+	 */
+	function test_wp_enqueue_style_with_html5_support_does_not_contain_type_attribute() {
+		add_theme_support( 'html5', array( 'style' ) );
+
+		$GLOBALS['wp_styles']                  = new WP_Styles();
+		$GLOBALS['wp_styles']->default_version = get_bloginfo( 'version' );
+
+		wp_enqueue_style( 'no-deps-no-version', 'example.com' );
+
+		$ver      = get_bloginfo( 'version' );
+		$expected = "<link rel='stylesheet' id='no-deps-no-version-css'  href='http://example.com?ver=$ver' media='all' />\n";
+
+		$this->assertEquals( $expected, get_echo( 'wp_print_styles' ) );
 	}
 
 	/**
@@ -233,7 +272,7 @@ CSS;
 		wp_style_add_data( 'handle', 'conditional', 'IE' );
 		wp_add_inline_style( 'handle', 'a { color: blue; }' );
 
-		$this->assertEquals( $expected, get_echo( 'wp_print_styles' ) );
+		$this->assertEqualsIgnoreEOL( $expected, get_echo( 'wp_print_styles' ) );
 	}
 
 	/**
@@ -304,5 +343,68 @@ CSS;
 				'not screen and (color)',
 			),
 		);
+	}
+
+	/**
+	 * Tests that visual block styles are enqueued in the editor even when there is not theme support for 'wp-block-styles'.
+	 *
+	 * Visual block styles should always be enqueued when editing to avoid the appearance of a broken editor.
+	 */
+	function test_block_styles_for_editing_without_theme_support() {
+		// Confirm we are without theme support by default.
+		$this->assertFalse( current_theme_supports( 'wp-block-styles' ) );
+
+		wp_default_styles( $GLOBALS['wp_styles'] );
+
+		$this->assertFalse( wp_style_is( 'wp-block-library-theme' ) );
+		wp_enqueue_style( 'wp-edit-blocks' );
+		$this->assertTrue( wp_style_is( 'wp-block-library-theme' ) );
+	}
+
+	/**
+	 * Tests that visual block styles are enqueued when there is theme support for 'wp-block-styles'.
+	 *
+	 * Visual block styles should always be enqueued when editing to avoid the appearance of a broken editor.
+	 */
+	function test_block_styles_for_editing_with_theme_support() {
+		add_theme_support( 'wp-block-styles' );
+
+		wp_default_styles( $GLOBALS['wp_styles'] );
+
+		$this->assertFalse( wp_style_is( 'wp-block-library-theme' ) );
+		wp_common_block_scripts_and_styles();
+		$this->assertTrue( wp_style_is( 'wp-block-library-theme' ) );
+	}
+
+	/**
+	 * Tests that visual block styles are not enqueued for viewing when there is no theme support for 'wp-block-styles'.
+	 *
+	 * Visual block styles should not be enqueued unless a theme opts in.
+	 * This way we avoid style conflicts with existing themes.
+	 */
+	function test_no_block_styles_for_viewing_without_theme_support() {
+		// Confirm we are without theme support by default.
+		$this->assertFalse( current_theme_supports( 'wp-block-styles' ) );
+
+		wp_default_styles( $GLOBALS['wp_styles'] );
+
+		$this->assertFalse( wp_style_is( 'wp-block-library-theme' ) );
+		wp_enqueue_style( 'wp-block-library' );
+		$this->assertFalse( wp_style_is( 'wp-block-library-theme' ) );
+	}
+
+	/**
+	 * Tests that visual block styles are enqueued for viewing when there is theme support for 'wp-block-styles'.
+	 *
+	 * Visual block styles should be enqueued when a theme opts in.
+	 */
+	function test_block_styles_for_viewing_with_theme_support() {
+		add_theme_support( 'wp-block-styles' );
+
+		wp_default_styles( $GLOBALS['wp_styles'] );
+
+		$this->assertFalse( wp_style_is( 'wp-block-library-theme' ) );
+		wp_common_block_scripts_and_styles();
+		$this->assertTrue( wp_style_is( 'wp-block-library-theme' ) );
 	}
 }

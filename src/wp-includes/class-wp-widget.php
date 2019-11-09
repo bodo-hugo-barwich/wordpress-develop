@@ -177,8 +177,9 @@ class WP_Widget {
 	 * PHP4 constructor.
 	 *
 	 * @since 2.8.0
+	 * @deprecated 4.3.0 Use __construct() instead.
 	 *
-	 * @see __construct()
+	 * @see WP_Widget::__construct()
 	 *
 	 * @param string $id_base         Optional Base ID for the widget, lowercase and unique. If left empty,
 	 *                                a portion of the widget's class name will be used Has to be unique.
@@ -206,7 +207,8 @@ class WP_Widget {
 	 * @return string Name attribute for $field_name
 	 */
 	public function get_field_name( $field_name ) {
-		if ( false === $pos = strpos( $field_name, '[' ) ) {
+		$pos = strpos( $field_name, '[' );
+		if ( false === $pos ) {
 			return 'widget-' . $this->id_base . '[' . $this->number . '][' . $field_name . ']';
 		} else {
 			return 'widget-' . $this->id_base . '[' . $this->number . '][' . substr_replace( $field_name, '][', $pos, strlen( '[' ) );

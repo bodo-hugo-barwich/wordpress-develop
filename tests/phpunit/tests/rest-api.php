@@ -14,9 +14,11 @@ require_once ABSPATH . WPINC . '/rest-api.php';
  */
 class Tests_REST_API extends WP_UnitTestCase {
 	public function setUp() {
+		parent::setUp();
+
 		// Override the normal server with our spying server.
 		$GLOBALS['wp_rest_server'] = new Spy_REST_Server();
-		parent::setUp();
+		do_action( 'rest_api_init', $GLOBALS['wp_rest_server'] );
 	}
 
 	public function tearDown() {
@@ -253,7 +255,7 @@ class Tests_REST_API extends WP_UnitTestCase {
 	 */
 	function test_rest_route_query_var() {
 		rest_api_init();
-		$this->assertTrue( in_array( 'rest_route', $GLOBALS['wp']->public_query_vars ) );
+		$this->assertTrue( in_array( 'rest_route', $GLOBALS['wp']->public_query_vars, true ) );
 	}
 
 	public function test_route_method() {
@@ -518,6 +520,167 @@ class Tests_REST_API extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Ensure that nested fields may be whitelisted with request['_fields'].
+	 *
+	 * @ticket 42094
+	 */
+	public function test_rest_filter_response_fields_nested_field_filter() {
+		$response = new WP_REST_Response();
+
+		$response->set_data(
+			array(
+				'a' => 0,
+				'b' => array(
+					'1' => 1,
+					'2' => 2,
+				),
+				'c' => 3,
+				'd' => array(
+					'4' => 4,
+					'5' => 5,
+				),
+			)
+		);
+		$request = array(
+			'_fields' => 'b.1,c,d.5',
+		);
+
+		$response = rest_filter_response_fields( $response, null, $request );
+		$this->assertEquals(
+			array(
+				'b' => array(
+					'1' => 1,
+				),
+				'c' => 3,
+				'd' => array(
+					'5' => 5,
+				),
+			),
+			$response->get_data()
+		);
+	}
+
+	/**
+	 * Ensure that specifying a single top-level key in _fields includes that field and all children.
+	 *
+	 * @ticket 48266
+	 */
+	public function test_rest_filter_response_fields_top_level_key() {
+		$response = new WP_REST_Response();
+
+		$response->set_data(
+			array(
+				'meta' => array(
+					'key1' => 1,
+					'key2' => 2,
+				),
+			)
+		);
+		$request = array(
+			'_fields' => 'meta',
+		);
+
+		$response = rest_filter_response_fields( $response, null, $request );
+		$this->assertEquals(
+			array(
+				'meta' => array(
+					'key1' => 1,
+					'key2' => 2,
+				),
+			),
+			$response->get_data()
+		);
+	}
+
+	/**
+	 * Ensure that a top-level key in _fields supersedes any specified children of that field.
+	 *
+	 * @ticket 48266
+	 */
+	public function test_rest_filter_response_fields_child_after_parent() {
+		$response = new WP_REST_Response();
+
+		$response->set_data(
+			array(
+				'meta' => array(
+					'key1' => 1,
+					'key2' => 2,
+				),
+			)
+		);
+		$request = array(
+			'_fields' => 'meta,meta.key1',
+		);
+
+		$response = rest_filter_response_fields( $response, null, $request );
+		$this->assertEquals(
+			array(
+				'meta' => array(
+					'key1' => 1,
+					'key2' => 2,
+				),
+			),
+			$response->get_data()
+		);
+	}
+
+	/**
+	 * Ensure that specifying two sibling properties in _fields causes both to be included.
+	 *
+	 * @ticket 48266
+	 */
+	public function test_rest_filter_response_fields_include_all_specified_siblings() {
+		$response = new WP_REST_Response();
+
+		$response->set_data(
+			array(
+				'meta' => array(
+					'key1' => 1,
+					'key2' => 2,
+				),
+			)
+		);
+		$request = array(
+			'_fields' => 'meta.key1,meta.key2',
+		);
+
+		$response = rest_filter_response_fields( $response, null, $request );
+		$this->assertEquals(
+			array(
+				'meta' => array(
+					'key1' => 1,
+					'key2' => 2,
+				),
+			),
+			$response->get_data()
+		);
+	}
+
+	/**
+	 * @ticket 42094
+	 */
+	public function test_rest_is_field_included() {
+		$fields = array(
+			'id',
+			'title',
+			'content.raw',
+			'custom.property',
+		);
+
+		$this->assertTrue( rest_is_field_included( 'id', $fields ) );
+		$this->assertTrue( rest_is_field_included( 'title', $fields ) );
+		$this->assertTrue( rest_is_field_included( 'title.raw', $fields ) );
+		$this->assertTrue( rest_is_field_included( 'title.rendered', $fields ) );
+		$this->assertTrue( rest_is_field_included( 'content', $fields ) );
+		$this->assertTrue( rest_is_field_included( 'content.raw', $fields ) );
+		$this->assertTrue( rest_is_field_included( 'custom.property', $fields ) );
+		$this->assertFalse( rest_is_field_included( 'content.rendered', $fields ) );
+		$this->assertFalse( rest_is_field_included( 'type', $fields ) );
+		$this->assertFalse( rest_is_field_included( 'meta', $fields ) );
+		$this->assertFalse( rest_is_field_included( 'meta.value', $fields ) );
+	}
+
+	/**
 	 * The get_rest_url function should return a URL consistently terminated with a "/",
 	 * whether the blog is configured with pretty permalink support or not.
 	 */
@@ -711,5 +874,36 @@ class Tests_REST_API extends WP_UnitTestCase {
 
 		$routes = $GLOBALS['wp_rest_server']->get_routes();
 		$this->assertEquals( $routes['/test-ns/test'][0]['methods'], array( 'GET' => true ) );
+	}
+
+	function test_rest_preload_api_request_with_method() {
+		$rest_server               = $GLOBALS['wp_rest_server'];
+		$GLOBALS['wp_rest_server'] = null;
+
+		$preload_paths = array(
+			'/wp/v2/types',
+			array( '/wp/v2/media', 'OPTIONS' ),
+		);
+
+		$preload_data = array_reduce(
+			$preload_paths,
+			'rest_preload_api_request',
+			array()
+		);
+
+		$this->assertSame( array_keys( $preload_data ), array( '/wp/v2/types', 'OPTIONS' ) );
+		$this->assertTrue( isset( $preload_data['OPTIONS']['/wp/v2/media'] ) );
+
+		$GLOBALS['wp_rest_server'] = $rest_server;
+	}
+
+	/**
+	 * @ticket 40614
+	 */
+	function test_rest_ensure_response_accepts_path_string() {
+		$request = rest_ensure_request( '/wp/v2/posts' );
+		$this->assertInstanceOf( 'WP_REST_Request', $request );
+		$this->assertEquals( '/wp/v2/posts', $request->get_route() );
+		$this->assertEquals( 'GET', $request->get_method() );
 	}
 }

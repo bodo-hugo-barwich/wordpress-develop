@@ -5,6 +5,7 @@
  */
 class Tests_POMO_PO extends WP_UnitTestCase {
 	function setUp() {
+		parent::setUp();
 		require_once ABSPATH . '/wp-includes/pomo/po.php';
 		// not so random wordpress.pot string -- multiple lines
 		$this->mail    = 'Your new WordPress blog has been successfully set up at:
@@ -21,6 +22,7 @@ We hope you enjoy your new blog. Thanks!
 --The WordPress Team
 http://wordpress.org/
 ';
+		$this->mail    = str_replace( "\r\n", "\n", $this->mail );
 		$this->po_mail = '""
 "Your new WordPress blog has been successfully set up at:\n"
 "\n"
@@ -62,7 +64,7 @@ http://wordpress.org/
 		$src = 'Categories can be selectively converted to tags using the <a href="%s">category to tag converter</a>.';
 		$this->assertEquals( '"Categories can be selectively converted to tags using the <a href=\\"%s\\">category to tag converter</a>."', $po->poify( $src ) );
 
-		$this->assertEquals( $this->po_mail, $po->poify( $this->mail ) );
+		$this->assertEqualsIgnoreEOL( $this->po_mail, $po->poify( $this->mail ) );
 	}
 
 	function test_unpoify() {
@@ -73,7 +75,7 @@ http://wordpress.org/
 		$this->assertEquals( '\\t\\n', $po->unpoify( '"\\\\t\\\\n"' ) );
 		// wordwrapped
 		$this->assertEquals( 'babadyado', $po->unpoify( "\"\"\n\"baba\"\n\"dyado\"" ) );
-		$this->assertEquals( $this->mail, $po->unpoify( $this->po_mail ) );
+		$this->assertEqualsIgnoreEOL( $this->mail, $po->unpoify( $this->po_mail ) );
 	}
 
 	function test_export_entry() {
@@ -87,7 +89,7 @@ http://wordpress.org/
 				'plural'   => 'babas',
 			)
 		);
-		$this->assertEquals(
+		$this->assertEqualsIgnoreEOL(
 			'msgid "baba"
 msgid_plural "babas"
 msgstr[0] ""
@@ -100,7 +102,7 @@ msgstr[1] ""',
 				'translator_comments' => "baba\ndyado",
 			)
 		);
-		$this->assertEquals(
+		$this->assertEqualsIgnoreEOL(
 			'#  baba
 #  dyado
 msgid "baba"
@@ -113,7 +115,7 @@ msgstr ""',
 				'extracted_comments' => 'baba',
 			)
 		);
-		$this->assertEquals(
+		$this->assertEqualsIgnoreEOL(
 			'#. baba
 msgid "baba"
 msgstr ""',
@@ -126,7 +128,7 @@ msgstr ""',
 				'references'         => range( 1, 29 ),
 			)
 		);
-		$this->assertEquals(
+		$this->assertEqualsIgnoreEOL(
 			'#. baba
 #: 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28
 #: 29
@@ -157,7 +159,7 @@ msgstr ""',
 				'translations' => array( 'кукубуку' ),
 			)
 		);
-		$this->assertEquals(
+		$this->assertEqualsIgnoreEOL(
 			'msgid "baba"
 msgid_plural "babas"
 msgstr[0] "кукубуку"',
@@ -171,7 +173,7 @@ msgstr[0] "кукубуку"',
 				'translations' => array( 'кукубуку', 'кукуруку', 'бабаяга' ),
 			)
 		);
-		$this->assertEquals(
+		$this->assertEqualsIgnoreEOL(
 			'msgid "baba"
 msgid_plural "babas"
 msgstr[0] "кукубуку"
@@ -189,7 +191,7 @@ msgstr[2] "бабаяга"',
 				'flags'        => array( 'fuzzy', 'php-format' ),
 			)
 		);
-		$this->assertEquals(
+		$this->assertEqualsIgnoreEOL(
 			'#, fuzzy, php-format
 msgctxt "ctxt"
 msgid "baba"

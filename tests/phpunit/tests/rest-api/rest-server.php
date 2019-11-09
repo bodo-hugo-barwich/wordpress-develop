@@ -211,7 +211,7 @@ class Tests_REST_Server extends WP_Test_REST_TestCase {
 	 * Pass a capability which the user does not have, this should
 	 * result in a 403 error.
 	 */
-	function test_rest_route_capability_authorization_fails() {
+	public function test_rest_route_capability_authorization_fails() {
 		register_rest_route(
 			'test-ns',
 			'/test',
@@ -233,7 +233,7 @@ class Tests_REST_Server extends WP_Test_REST_TestCase {
 	 * An editor should be able to get access to an route with the
 	 * edit_posts capability.
 	 */
-	function test_rest_route_capability_authorization() {
+	public function test_rest_route_capability_authorization() {
 		register_rest_route(
 			'test-ns',
 			'/test',
@@ -260,7 +260,7 @@ class Tests_REST_Server extends WP_Test_REST_TestCase {
 	 * An "Allow" HTTP header should be sent with a request
 	 * for all available methods on that route.
 	 */
-	function test_allow_header_sent() {
+	public function test_allow_header_sent() {
 
 		register_rest_route(
 			'test-ns',
@@ -287,7 +287,7 @@ class Tests_REST_Server extends WP_Test_REST_TestCase {
 	 * The "Allow" HTTP header should include all available
 	 * methods that can be sent to a route.
 	 */
-	function test_allow_header_sent_with_multiple_methods() {
+	public function test_allow_header_sent_with_multiple_methods() {
 
 		register_rest_route(
 			'test-ns',
@@ -325,7 +325,7 @@ class Tests_REST_Server extends WP_Test_REST_TestCase {
 	 * The "Allow" HTTP header should NOT include other methods
 	 * which the user does not have access to.
 	 */
-	function test_allow_header_send_only_permitted_methods() {
+	public function test_allow_header_send_only_permitted_methods() {
 
 		register_rest_route(
 			'test-ns',
@@ -569,6 +569,7 @@ class Tests_REST_Server extends WP_Test_REST_TestCase {
 
 	/**
 	 * @depends test_link_embedding
+	 * @ticket 47684
 	 */
 	public function test_link_embedding_self() {
 		// Register our testing route.
@@ -582,8 +583,32 @@ class Tests_REST_Server extends WP_Test_REST_TestCase {
 		);
 		$response = new WP_REST_Response();
 
-		// 'self' should be ignored.
-		$response->add_link( 'self', rest_url( '/test/notembeddable' ), array( 'embeddable' => true ) );
+		// 'self' should not be special-cased, and may be marked embeddable.
+		$response->add_link( 'self', rest_url( '/test/embeddable' ), array( 'embeddable' => true ) );
+
+		$data = rest_get_server()->response_to_data( $response, true );
+
+		$this->assertArrayHasKey( '_embedded', $data );
+	}
+
+	/**
+	 * @depends test_link_embedding
+	 * @ticket 47684
+	 */
+	public function test_link_embedding_self_non_embeddable() {
+		// Register our testing route.
+		rest_get_server()->register_route(
+			'test',
+			'/test/embeddable',
+			array(
+				'methods'  => 'GET',
+				'callback' => array( $this, 'embedded_response_callback' ),
+			)
+		);
+		$response = new WP_REST_Response();
+
+		// 'self' should not be special-cased, and should be ignored if not marked embeddable.
+		$response->add_link( 'self', rest_url( '/test/notembeddable' ) );
 
 		$data = rest_get_server()->response_to_data( $response, true );
 
@@ -1144,6 +1169,48 @@ class Tests_REST_Server extends WP_Test_REST_TestCase {
 		$this->assertEquals( 200, $response->get_status() );
 	}
 
+	/**
+	 * @ticket 43691
+	 */
+	public function test_does_not_echo_body_for_null_responses() {
+		register_rest_route(
+			'test-ns',
+			'/test',
+			array(
+				'methods'  => array( 'GET' ),
+				'callback' => function () {
+					return new WP_REST_Response();
+				},
+			)
+		);
+
+		$result = rest_get_server()->serve_request( '/test-ns/test' );
+
+		$this->assertNull( $result );
+		$this->assertEquals( '', rest_get_server()->sent_body );
+	}
+
+	/**
+	 * @ticket 43691
+	 */
+	public function test_does_not_echo_body_for_responses_with_204_status() {
+		register_rest_route(
+			'test-ns',
+			'/test',
+			array(
+				'methods'  => array( 'GET' ),
+				'callback' => function () {
+					return new WP_REST_Response( 'data', 204 );
+				},
+			)
+		);
+
+		$result = rest_get_server()->serve_request( '/test-ns/test' );
+
+		$this->assertNull( $result );
+		$this->assertEquals( '', rest_get_server()->sent_body );
+	}
+
 	public function _validate_as_integer_123( $value, $request, $key ) {
 		if ( ! is_int( $value ) ) {
 			return new WP_Error( 'some-error', 'This is not valid!' );
@@ -1168,7 +1235,7 @@ class Tests_REST_Server extends WP_Test_REST_TestCase {
 	 *     }
 	 * }
 	 */
-	function data_rest_send_refreshed_nonce() {
+	public function data_rest_send_refreshed_nonce() {
 		return array(
 			array( true, true ),
 			array( true, false ),

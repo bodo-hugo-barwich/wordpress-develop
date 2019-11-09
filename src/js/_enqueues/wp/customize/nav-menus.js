@@ -156,7 +156,6 @@
 
 		events: {
 			'input #menu-items-search': 'debounceSearch',
-			'keyup #menu-items-search': 'debounceSearch',
 			'focus .menu-item-tpl': 'focus',
 			'click .menu-item-tpl': '_submit',
 			'click #custom-menu-item-submit': '_submitLink',
@@ -545,6 +544,7 @@
 			var menuItem,
 				itemName = $( '#custom-menu-item-name' ),
 				itemUrl = $( '#custom-menu-item-url' ),
+				url = itemUrl.val().trim(),
 				urlRegex;
 
 			if ( ! this.currentMenuControl ) {
@@ -568,14 +568,14 @@
 			if ( '' === itemName.val() ) {
 				itemName.addClass( 'invalid' );
 				return;
-			} else if ( ! urlRegex.test( itemUrl.val() ) ) {
+			} else if ( ! urlRegex.test( url ) ) {
 				itemUrl.addClass( 'invalid' );
 				return;
 			}
 
 			menuItem = {
 				'title': itemName.val(),
-				'url': itemUrl.val(),
+				'url': url,
 				'type': 'custom',
 				'type_label': api.Menus.data.l10n.custom_label,
 				'object': 'custom'
@@ -584,7 +584,7 @@
 			this.currentMenuControl.addItemToMenu( menuItem );
 
 			// Reset the custom link form.
-			itemUrl.val( 'http://' );
+			itemUrl.val( '' ).attr( 'placeholder', 'https://' );
 			itemName.val( '' );
 		},
 
@@ -1921,7 +1921,6 @@
 			control.params.target = settingValue.target;
 			control.params.attr_title = settingValue.attr_title;
 			control.params.classes = _.isArray( settingValue.classes ) ? settingValue.classes.join( ' ' ) : settingValue.classes;
-			control.params.attr_title = settingValue.attr_title;
 			control.params.xfn = settingValue.xfn;
 			control.params.description = settingValue.description;
 			control.params.parent = settingValue.menu_item_parent;
@@ -3028,83 +3027,6 @@
 		}
 	} );
 
-	api.Menus.NewMenuControl = api.Control.extend(/** @lends wp.customize.Menus.NewMenuControl.prototype */{
-
-		/**
-		 * wp.customize.Menus.NewMenuControl
-		 *
-		 * Customizer control for creating new menus and handling deletion of existing menus.
-		 * Note that 'new_menu' must match the WP_Customize_New_Menu_Control::$type.
-		 *
-		 * @constructs wp.customize.Menus.NewMenuControl
-		 * @augments   wp.customize.Control
-		 *
-		 * @deprecated 4.9.0 This class is no longer used due to new menu creation UX.
-		 */
-		initialize: function() {
-			if ( 'undefined' !== typeof console && console.warn ) {
-				console.warn( '[DEPRECATED] wp.customize.NewMenuControl will be removed. Please use wp.customize.Menus.createNavMenu() instead.' );
-			}
-			api.Control.prototype.initialize.apply( this, arguments );
-		},
-
-		/**
-		 * Set up the control.
-		 *
-		 * @deprecated 4.9.0
-		 */
-		ready: function() {
-			this._bindHandlers();
-		},
-
-		_bindHandlers: function() {
-			var self = this,
-				name = $( '#customize-control-new_menu_name input' ),
-				submit = $( '#create-new-menu-submit' );
-			name.on( 'keydown', function( event ) {
-				if ( 13 === event.which ) { // Enter.
-					self.submit();
-				}
-			} );
-			submit.on( 'click', function( event ) {
-				self.submit();
-				event.stopPropagation();
-				event.preventDefault();
-			} );
-		},
-
-		/**
-		 * Create the new menu with the name supplied.
-		 *
-		 * @deprecated 4.9.0
-		 */
-		submit: function() {
-
-			var control = this,
-				container = control.container.closest( '.accordion-section-new-menu' ),
-				nameInput = container.find( '.menu-name-field' ).first(),
-				name = nameInput.val(),
-				menuSection;
-
-			if ( ! name ) {
-				nameInput.addClass( 'invalid' );
-				nameInput.focus();
-				return;
-			}
-
-			menuSection = api.Menus.createNavMenu( name );
-
-			// Clear name field.
-			nameInput.val( '' );
-			nameInput.removeClass( 'invalid' );
-
-			wp.a11y.speak( api.Menus.data.l10n.menuAdded );
-
-			// Focus on the new menu section.
-			menuSection.focus();
-		}
-	});
-
 	/**
 	 * Extends wp.customize.controlConstructor with control constructor for
 	 * menu_location, menu_item, nav_menu, and new_menu.
@@ -3114,7 +3036,6 @@
 		nav_menu_item: api.Menus.MenuItemControl,
 		nav_menu: api.Menus.MenuControl,
 		nav_menu_name: api.Menus.MenuNameControl,
-		new_menu: api.Menus.NewMenuControl, // @todo Remove in 5.0. See #42364.
 		nav_menu_locations: api.Menus.MenuLocationsControl,
 		nav_menu_auto_add: api.Menus.MenuAutoAddControl
 	});
@@ -3456,7 +3377,7 @@
 	 */
 	function displayNavMenuName( name ) {
 		name = name || '';
-		name = $( '<div>' ).text( name ).html(); // Emulate esc_html() which is used in wp-admin/nav-menus.php.
+		name = wp.sanitize.stripTagsAndEncodeText( name ); // Remove any potential tags from name.
 		name = $.trim( name );
 		return name || api.Menus.data.l10n.unnamed;
 	}

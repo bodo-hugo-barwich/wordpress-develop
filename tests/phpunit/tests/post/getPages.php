@@ -21,8 +21,9 @@ class Tests_Post_getPages extends WP_UnitTestCase {
 
 		$pages = get_pages();
 		$this->assertEquals( 3, count( $pages ) );
-		$this->assertNotEmpty( $time1 = wp_cache_get( 'last_changed', 'posts' ) );
-		$num_queries                  = $wpdb->num_queries;
+		$time1 = wp_cache_get( 'last_changed', 'posts' );
+		$this->assertNotEmpty( $time1 );
+		$num_queries = $wpdb->num_queries;
 		foreach ( $pages as $page ) {
 			$this->assertInstanceOf( 'WP_Post', $page );
 		}
@@ -699,5 +700,27 @@ class Tests_Post_getPages extends WP_UnitTestCase {
 
 		$exclude6 = get_pages( array( 'exclude_tree' => array( $post_id1, $post_id3 ) ) );
 		$this->assertCount( 2, $exclude6 );
+	}
+
+	/**
+	 * @ticket 43514
+	 */
+	function test_get_pages_cache_empty() {
+		global $wpdb;
+
+		wp_cache_delete( 'last_changed', 'posts' );
+		$this->assertFalse( wp_cache_get( 'last_changed', 'posts' ) );
+
+		$num_queries = $wpdb->num_queries;
+
+		$pages = get_pages(); // Database gets queried
+
+		$this->assertEquals( $num_queries + 1, $wpdb->num_queries );
+
+		$num_queries = $wpdb->num_queries;
+
+		$pages = get_pages(); // Database should not get queried
+
+		$this->assertEquals( $num_queries, $wpdb->num_queries );
 	}
 }

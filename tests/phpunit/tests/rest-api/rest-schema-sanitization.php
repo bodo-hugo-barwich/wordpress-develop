@@ -38,7 +38,8 @@ class WP_Test_REST_Schema_Sanitization extends WP_UnitTestCase {
 			'type' => 'string',
 		);
 		$this->assertEquals( 'Hello', rest_sanitize_value_from_schema( 'Hello', $schema ) );
-		$this->assertEquals( '1.10', rest_sanitize_value_from_schema( 1.10, $schema ) );
+		$this->assertEquals( '1.10', rest_sanitize_value_from_schema( '1.10', $schema ) );
+		$this->assertEquals( '1.1', rest_sanitize_value_from_schema( 1.1, $schema ) );
 		$this->assertEquals( '1', rest_sanitize_value_from_schema( 1, $schema ) );
 	}
 
@@ -110,6 +111,7 @@ class WP_Test_REST_Schema_Sanitization extends WP_UnitTestCase {
 		);
 		$this->assertEquals( array( 1, 2 ), rest_sanitize_value_from_schema( '1,2', $schema ) );
 		$this->assertEquals( array( 1, 2, 0 ), rest_sanitize_value_from_schema( '1,2,a', $schema ) );
+		$this->assertEquals( array( 1, 2 ), rest_sanitize_value_from_schema( '1,2,', $schema ) );
 	}
 
 	public function test_type_array_with_enum() {
@@ -134,6 +136,7 @@ class WP_Test_REST_Schema_Sanitization extends WP_UnitTestCase {
 		);
 		$this->assertEquals( array( 'ribs', 'chicken' ), rest_sanitize_value_from_schema( 'ribs,chicken', $schema ) );
 		$this->assertEquals( array( 'chicken', 'coleslaw' ), rest_sanitize_value_from_schema( 'chicken,coleslaw', $schema ) );
+		$this->assertEquals( array( 'chicken', 'coleslaw' ), rest_sanitize_value_from_schema( 'chicken,coleslaw,', $schema ) );
 	}
 
 	public function test_type_array_is_associative() {
@@ -288,5 +291,60 @@ class WP_Test_REST_Schema_Sanitization extends WP_UnitTestCase {
 		$this->assertEquals( 'Nothing', rest_sanitize_value_from_schema( 'Nothing', $schema ) );
 		$this->assertEquals( 1.10, rest_sanitize_value_from_schema( 1.10, $schema ) );
 		$this->assertEquals( 1, rest_sanitize_value_from_schema( 1, $schema ) );
+	}
+
+	public function test_nullable_date() {
+		$schema = array(
+			'type'   => array( 'string', 'null' ),
+			'format' => 'date-time',
+		);
+
+		$this->assertNull( rest_sanitize_value_from_schema( null, $schema ) );
+		$this->assertEquals( '2019-09-19T18:00:00', rest_sanitize_value_from_schema( '2019-09-19T18:00:00', $schema ) );
+		$this->assertNull( rest_sanitize_value_from_schema( 'lalala', $schema ) );
+	}
+
+	public function test_object_or_string() {
+		$schema = array(
+			'type'       => array( 'object', 'string' ),
+			'properties' => array(
+				'raw' => array(
+					'type' => 'string',
+				),
+			),
+		);
+
+		$this->assertEquals( 'My Value', rest_sanitize_value_from_schema( 'My Value', $schema ) );
+		$this->assertEquals( array( 'raw' => 'My Value' ), rest_sanitize_value_from_schema( array( 'raw' => 'My Value' ), $schema ) );
+		$this->assertNull( rest_sanitize_value_from_schema( array( 'raw' => 1 ), $schema ) );
+	}
+
+	public function test_object_or_bool() {
+		$schema = array(
+			'type'       => array( 'object', 'boolean' ),
+			'properties' => array(
+				'raw' => array(
+					'type' => 'boolean',
+				),
+			),
+		);
+
+		$this->assertTrue( rest_sanitize_value_from_schema( true, $schema ) );
+		$this->assertTrue( rest_sanitize_value_from_schema( '1', $schema ) );
+		$this->assertTrue( rest_sanitize_value_from_schema( 1, $schema ) );
+
+		$this->assertFalse( rest_sanitize_value_from_schema( false, $schema ) );
+		$this->assertFalse( rest_sanitize_value_from_schema( '0', $schema ) );
+		$this->assertFalse( rest_sanitize_value_from_schema( 0, $schema ) );
+
+		$this->assertEquals( array( 'raw' => true ), rest_sanitize_value_from_schema( array( 'raw' => true ), $schema ) );
+		$this->assertEquals( array( 'raw' => true ), rest_sanitize_value_from_schema( array( 'raw' => '1' ), $schema ) );
+		$this->assertEquals( array( 'raw' => true ), rest_sanitize_value_from_schema( array( 'raw' => 1 ), $schema ) );
+
+		$this->assertEquals( array( 'raw' => false ), rest_sanitize_value_from_schema( array( 'raw' => false ), $schema ) );
+		$this->assertEquals( array( 'raw' => false ), rest_sanitize_value_from_schema( array( 'raw' => '0' ), $schema ) );
+		$this->assertEquals( array( 'raw' => false ), rest_sanitize_value_from_schema( array( 'raw' => 0 ), $schema ) );
+
+		$this->assertNull( rest_sanitize_value_from_schema( array( 'raw' => 'something non boolean' ), $schema ) );
 	}
 }

@@ -35,8 +35,10 @@ function translations_api( $type, $args = null ) {
 	$res = apply_filters( 'translations_api', false, $type, $args );
 
 	if ( false === $res ) {
-		$url = $http_url = 'http://api.wordpress.org/translations/' . $type . '/1.0/';
-		if ( $ssl = wp_http_supports( array( 'ssl' ) ) ) {
+		$url      = 'http://api.wordpress.org/translations/' . $type . '/1.0/';
+		$http_url = $url;
+		$ssl      = wp_http_supports( array( 'ssl' ) );
+		if ( $ssl ) {
 			$url = set_url_scheme( $url, 'https' );
 		}
 
@@ -58,9 +60,9 @@ function translations_api( $type, $args = null ) {
 		if ( $ssl && is_wp_error( $request ) ) {
 			trigger_error(
 				sprintf(
-					/* translators: %s: support forums URL */
+					/* translators: %s: Support forums URL. */
 					__( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="%s">support forums</a>.' ),
-					__( 'https://wordpress.org/support/' )
+					__( 'https://wordpress.org/support/forums/' )
 				) . ' ' . __( '(WordPress could not establish a secure connection to WordPress.org. Please contact your server administrator.)' ),
 				headers_sent() || WP_DEBUG ? E_USER_WARNING : E_USER_NOTICE
 			);
@@ -72,9 +74,9 @@ function translations_api( $type, $args = null ) {
 			$res = new WP_Error(
 				'translations_api_failed',
 				sprintf(
-					/* translators: %s: support forums URL */
+					/* translators: %s: Support forums URL. */
 					__( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="%s">support forums</a>.' ),
-					__( 'https://wordpress.org/support/' )
+					__( 'https://wordpress.org/support/forums/' )
 				),
 				$request->get_error_message()
 			);
@@ -84,9 +86,9 @@ function translations_api( $type, $args = null ) {
 				$res = new WP_Error(
 					'translations_api_failed',
 					sprintf(
-						/* translators: %s: support forums URL */
+						/* translators: %s: Support forums URL. */
 						__( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="%s">support forums</a>.' ),
-						__( 'https://wordpress.org/support/' )
+						__( 'https://wordpress.org/support/forums/' )
 					),
 					wp_remote_retrieve_body( $request )
 				);
@@ -113,12 +115,15 @@ function translations_api( $type, $args = null ) {
  *
  * @see translations_api()
  *
- * @return array Array of translations, each an array of data. If the API response results
- *               in an error, an empty array will be returned.
+ * @return array[] Array of translations, each an array of data, keyed by the language. If the API response results
+ *                 in an error, an empty array will be returned.
  */
 function wp_get_available_translations() {
-	if ( ! wp_installing() && false !== ( $translations = get_site_transient( 'available_translations' ) ) ) {
-		return $translations;
+	if ( ! wp_installing() ) {
+		$translations = get_site_transient( 'available_translations' );
+		if ( false !== $translations ) {
+			return $translations;
+		}
 	}
 
 	include( ABSPATH . WPINC . '/version.php' ); // include an unmodified $wp_version
@@ -149,7 +154,7 @@ function wp_get_available_translations() {
  *
  * @global string $wp_local_package
  *
- * @param array $languages Array of available languages (populated via the Translation API).
+ * @param array[] $languages Array of available languages (populated via the Translation API).
  */
 function wp_install_language_form( $languages ) {
 	global $wp_local_package;

@@ -37,7 +37,7 @@ function wp_styles() {
  * @since 2.6.0
  *
  * @param string|bool|array $handles Styles to be printed. Default 'false'.
- * @return array On success, a processed array of WP_Dependencies items; otherwise, an empty array.
+ * @return string[] On success, an array of handles of processed WP_Dependencies items; otherwise, an empty array.
  */
 function wp_print_styles( $handles = false ) {
 	if ( '' === $handles ) { // for wp_head
@@ -67,7 +67,7 @@ function wp_print_styles( $handles = false ) {
 /**
  * Add extra CSS styles to a registered stylesheet.
  *
- * Styles will only be added if the stylesheet in already in the queue.
+ * Styles will only be added if the stylesheet is already in the queue.
  * Accepts a string $data containing the CSS. If two or more CSS code blocks
  * are added to the same stylesheet $handle, they will be printed in the order
  * they were added, i.e. the latter added styles can redeclare the previous.
@@ -110,8 +110,9 @@ function wp_add_inline_style( $handle, $data ) {
  * @since 4.3.0 A return value was added.
  *
  * @param string           $handle Name of the stylesheet. Should be unique.
- * @param string           $src    Full URL of the stylesheet, or path of the stylesheet relative to the WordPress root directory.
- * @param array            $deps   Optional. An array of registered stylesheet handles this stylesheet depends on. Default empty array.
+ * @param string|bool      $src    Full URL of the stylesheet, or path of the stylesheet relative to the WordPress root directory.
+ *                                 If source is set to false, stylesheet is an alias of other stylesheets it depends on.
+ * @param string[]         $deps   Optional. An array of registered stylesheet handles this stylesheet depends on. Default empty array.
  * @param string|bool|null $ver    Optional. String specifying stylesheet version number, if it has one, which is added to the URL
  *                                 as a query string for cache busting purposes. If version is set to false, a version
  *                                 number is automatically added equal to current installed WordPress version.
@@ -156,7 +157,7 @@ function wp_deregister_style( $handle ) {
  * @param string           $handle Name of the stylesheet. Should be unique.
  * @param string           $src    Full URL of the stylesheet, or path of the stylesheet relative to the WordPress root directory.
  *                                 Default empty.
- * @param array            $deps   Optional. An array of registered stylesheet handles this stylesheet depends on. Default empty array.
+ * @param string[]         $deps   Optional. An array of registered stylesheet handles this stylesheet depends on. Default empty array.
  * @param string|bool|null $ver    Optional. String specifying stylesheet version number, if it has one, which is added to the URL
  *                                 as a query string for cache busting purposes. If version is set to false, a version
  *                                 number is automatically added equal to current installed WordPress version.

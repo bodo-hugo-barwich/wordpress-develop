@@ -37,20 +37,28 @@ class Tests_Kses extends WP_UnitTestCase {
 		global $allowedposttags;
 
 		$attributes = array(
-			'class'  => 'classname',
-			'id'     => 'id',
-			'style'  => 'color: red;',
-			'title'  => 'title',
-			'href'   => 'http://example.com',
-			'rel'    => 'related',
-			'rev'    => 'revision',
-			'name'   => 'name',
-			'target' => '_blank',
+			'class'    => 'classname',
+			'id'       => 'id',
+			'style'    => 'color: red;',
+			'title'    => 'title',
+			'href'     => 'http://example.com',
+			'rel'      => 'related',
+			'rev'      => 'revision',
+			'name'     => 'name',
+			'target'   => '_blank',
+			'download' => '',
 		);
 
 		foreach ( $attributes as $name => $value ) {
-			$string        = "<a $name='$value'>I link this</a>";
-			$expect_string = "<a $name='" . trim( $value, ';' ) . "'>I link this</a>";
+			if ( $value ) {
+				$attr          = "$name='$value'";
+				$expected_attr = "$name='" . trim( $value, ';' ) . "'";
+			} else {
+				$attr          = $name;
+				$expected_attr = $name;
+			}
+			$string        = "<a $attr>I link this</a>";
+			$expect_string = "<a $expected_attr>I link this</a>";
 			$this->assertEquals( $expect_string, wp_kses( $string, $allowedposttags ) );
 		}
 	}
@@ -137,10 +145,12 @@ EOF;
 			'javascript&#0000058alert(1)//?:',
 			'feed:javascript:alert(1)',
 			'feed:javascript:feed:javascript:feed:javascript:alert(1)',
+			'javascript&#58alert(1)',
+			'javascript&#x3ax=1;alert(1)',
 		);
 		foreach ( $bad as $k => $x ) {
 			$result = wp_kses_bad_protocol( wp_kses_normalize_entities( $x ), wp_allowed_protocols() );
-			if ( ! empty( $result ) && $result != 'alert(1);' && $result != 'alert(1)' ) {
+			if ( ! empty( $result ) && 'alert(1);' !== $result && 'alert(1)' !== $result ) {
 				switch ( $k ) {
 					case 6:
 						$this->assertEquals( 'javascript&amp;#0000058alert(1);', $result );
@@ -157,8 +167,14 @@ EOF;
 					case 24:
 						$this->assertEquals( 'feed:alert(1)', $result );
 						break;
+					case 26:
+						$this->assertEquals( 'javascript&amp;#58alert(1)', $result );
+						break;
+					case 27:
+						$this->assertEquals( 'javascript&amp;#x3ax=1;alert(1)', $result );
+						break;
 					default:
-						$this->fail( "wp_kses_bad_protocol failed on $x. Result: $result" );
+						$this->fail( "wp_kses_bad_protocol failed on $k, $x. Result: $result" );
 				}
 			}
 		}
@@ -175,7 +191,7 @@ EOF;
 		);
 		foreach ( $safe as $x ) {
 			$result = wp_kses_bad_protocol( wp_kses_normalize_entities( $x ), array( 'http', 'https', 'dummy' ) );
-			if ( $result != $x && $result != 'http://example.org/' ) {
+			if ( $result !== $x && 'http://example.org/' !== $result ) {
 				$this->fail( "wp_kses_bad_protocol incorrectly blocked $x" );
 			}
 		}
@@ -184,17 +200,17 @@ EOF;
 	public function test_hackers_attacks() {
 		$xss = simplexml_load_file( DIR_TESTDATA . '/formatting/xssAttacks.xml' );
 		foreach ( $xss->attack as $attack ) {
-			if ( in_array( $attack->name, array( 'IMG Embedded commands 2', 'US-ASCII encoding', 'OBJECT w/Flash 2', 'Character Encoding Example' ) ) ) {
+			if ( in_array( (string) $attack->name, array( 'IMG Embedded commands 2', 'US-ASCII encoding', 'OBJECT w/Flash 2', 'Character Encoding Example' ), true ) ) {
 				continue;
 			}
 
 			$code = (string) $attack->code;
 
-			if ( $code == 'See Below' ) {
+			if ( 'See Below' === $code ) {
 				continue;
 			}
 
-			if ( substr( $code, 0, 4 ) == 'perl' ) {
+			if ( substr( $code, 0, 4 ) === 'perl' ) {
 				$pos  = strpos( $code, '"' ) + 1;
 				$code = substr( $code, $pos, strrpos( $code, '"' ) - $pos );
 				$code = str_replace( '\0', "\0", $code );
@@ -202,7 +218,7 @@ EOF;
 
 			$result = trim( wp_kses_data( $code ) );
 
-			if ( $result == '' || $result == 'XSS' || $result == 'alert("XSS");' || $result == "alert('XSS');" ) {
+			if ( in_array( $result, array( '', 'XSS', 'alert("XSS");', "alert('XSS');" ), true ) ) {
 				continue;
 			}
 
@@ -316,7 +332,7 @@ EOF;
 	}
 
 	function _wp_kses_allowed_html_filter( $html, $context ) {
-		if ( 'post' == $context ) {
+		if ( 'post' === $context ) {
 			return array( 'a' => array( 'href' => true ) );
 		} else {
 			return array( 'a' => array( 'href' => false ) );
@@ -818,10 +834,291 @@ EOF;
 				'css'      => 'margin: 10px 20px;padding: 5px 10px',
 				'expected' => 'margin: 10px 20px;padding: 5px 10px',
 			),
-			// Parenthesis ( isn't supported.
+			// Parenthesis ( is supported for some attributes.
 			array(
 				'css'      => 'background: green url("foo.jpg") no-repeat fixed center',
+				'expected' => 'background: green url("foo.jpg") no-repeat fixed center',
+			),
+			// Additional background attributes introduced in 5.3.
+			array(
+				'css'      => 'background-size: cover;background-size: 200px 100px;background-attachment: local, scroll;background-blend-mode: hard-light',
+				'expected' => 'background-size: cover;background-size: 200px 100px;background-attachment: local, scroll;background-blend-mode: hard-light',
+			),
+			// `border-radius` attribute introduced in 5.3.
+			array(
+				'css'      => 'border-radius: 10% 30% 50% 70%;border-radius: 30px',
+				'expected' => 'border-radius: 10% 30% 50% 70%;border-radius: 30px',
+			),
+			// `flex` and related attributes introduced in 5.3.
+			array(
+				'css'      => 'flex: 0 1 auto;flex-basis: 75%;flex-direction: row-reverse;flex-flow: row-reverse nowrap;flex-grow: 2;flex-shrink: 1',
+				'expected' => 'flex: 0 1 auto;flex-basis: 75%;flex-direction: row-reverse;flex-flow: row-reverse nowrap;flex-grow: 2;flex-shrink: 1',
+			),
+			// `grid` and related attributes introduced in 5.3.
+			array(
+				'css'      => 'grid-template-columns: 1fr 60px;grid-auto-columns: min-content;grid-column-start: span 2;grid-column-end: -1;grid-column-gap: 10%;grid-gap: 10px 20px',
+				'expected' => 'grid-template-columns: 1fr 60px;grid-auto-columns: min-content;grid-column-start: span 2;grid-column-end: -1;grid-column-gap: 10%;grid-gap: 10px 20px',
+			),
+			array(
+				'css'      => 'grid-template-rows: 40px 4em 40px;grid-auto-rows: min-content;grid-row-start: -1;grid-row-end: 3;grid-row-gap: 1em',
+				'expected' => 'grid-template-rows: 40px 4em 40px;grid-auto-rows: min-content;grid-row-start: -1;grid-row-end: 3;grid-row-gap: 1em',
+			),
+			// `grid` does not yet support functions or `\`.
+			array(
+				'css'      => 'grid-template-columns: repeat(2, 50px 1fr);grid-template: 1em / 20% 20px 1fr',
 				'expected' => '',
+			),
+			// `flex` and `grid` alignments introduced in 5.3.
+			array(
+				'css'      => 'align-content: space-between;align-items: start;align-self: center;justify-items: center;justify-content: space-between;justify-self: end',
+				'expected' => 'align-content: space-between;align-items: start;align-self: center;justify-items: center;justify-content: space-between;justify-self: end',
+			),
+			// `columns` and related attributes introduced in 5.3.
+			array(
+				'css'      => 'columns: 6rem auto;column-count: 4;column-fill: balance;column-gap: 9px;column-rule: thick inset blue;column-span: none;column-width: 120px',
+				'expected' => 'columns: 6rem auto;column-count: 4;column-fill: balance;column-gap: 9px;column-rule: thick inset blue;column-span: none;column-width: 120px',
+			),
+		);
+	}
+
+	/**
+	 * Data attributes are globally accepted.
+	 *
+	 * @ticket 33121
+	 */
+	function test_wp_kses_attr_data_attribute_is_allowed() {
+		$test     = '<div data-foo="foo" data-bar="bar" datainvalid="gone" data--invaild="gone"  data-also-invaild-="gone" data-two-hyphens="remains">Pens and pencils</div>';
+		$expected = '<div data-foo="foo" data-bar="bar" data-two-hyphens="remains">Pens and pencils</div>';
+
+		$this->assertEquals( $expected, wp_kses_post( $test ) );
+	}
+
+	/**
+	 * Ensure wildcard attributes block unprefixed wildcard uses.
+	 *
+	 * @ticket 33121
+	 */
+	function test_wildcard_requires_hyphen_after_prefix() {
+		$allowed_html = array(
+			'div' => array(
+				'data-*' => true,
+				'on-*'   => true,
+			),
+		);
+
+		$string   = '<div datamelformed-prefix="gone" data="gone" data-="gone" onclick="alert(1)">Malformed attributes</div>';
+		$expected = '<div>Malformed attributes</div>';
+
+		$actual = wp_kses( $string, $allowed_html );
+
+		$this->assertSame( $expected, $actual );
+	}
+
+	/**
+	 * Ensure wildcard allows two hyphen.
+	 *
+	 * @ticket 33121
+	 */
+	function test_wildcard_allows_two_hyphens() {
+		$allowed_html = array(
+			'div' => array(
+				'data-*' => true,
+			),
+		);
+
+		$string   = '<div data-wp-id="pens-and-pencils">Well formed attribute</div>';
+		$expected = '<div data-wp-id="pens-and-pencils">Well formed attribute</div>';
+
+		$actual = wp_kses( $string, $allowed_html );
+
+		$this->assertSame( $expected, $actual );
+	}
+
+	/**
+	 * Ensure wildcard attributes only support valid prefixes.
+	 *
+	 * @dataProvider data_wildcard_attribute_prefixes
+	 *
+	 * @ticket 33121
+	 */
+	function test_wildcard_attribute_prefixes( $wildcard_attribute, $expected ) {
+		$allowed_html = array(
+			'div' => array(
+				$wildcard_attribute => true,
+			),
+		);
+
+		$name  = str_replace( '*', strtolower( __FUNCTION__ ), $wildcard_attribute );
+		$value = __FUNCTION__;
+		$whole = "{$name}=\"{$value}\"";
+
+		$actual = wp_kses_attr_check( $name, $value, $whole, 'n', 'div', $allowed_html );
+
+		$this->assertSame( $expected, $actual );
+	}
+
+	/**
+	 * @return array Array of arguments for wildcard testing
+	 *               [0] The prefix being tested.
+	 *               [1] The outcome of `wp_kses_attr_check` for the prefix.
+	 */
+	function data_wildcard_attribute_prefixes() {
+		return array(
+			// Ends correctly
+			array( 'data-*', true ),
+
+			// Does not end with trialing `-`.
+			array( 'data*', false ),
+
+			// Multiple wildcards.
+			array( 'd*ta-*', false ),
+			array( 'data**', false ),
+		);
+	}
+
+	/**
+	 * Test URL sanitization in the style tag.
+	 *
+	 * @dataProvider data_kses_style_attr_with_url
+	 *
+	 * @ticket 45067
+	 *
+	 * @param $input string The style attribute saved in the editor.
+	 * @param $expected string The sanitized style attribute.
+	 */
+	function test_kses_style_attr_with_url( $input, $expected ) {
+		$actual = safecss_filter_attr( $input );
+
+		$this->assertSame( $expected, $actual );
+	}
+
+	/**
+	 * Data provider testing style attribute sanitization.
+	 *
+	 * @return array Nested array of input, expected pairs.
+	 */
+	function data_kses_style_attr_with_url() {
+		return array(
+			/*
+			 * Valid use cases.
+			 */
+
+			// Double quotes.
+			array(
+				'background-image: url( "http://example.com/valid.gif" );',
+				'background-image: url( "http://example.com/valid.gif" )',
+			),
+
+			// Single quotes.
+			array(
+				"background-image: url( 'http://example.com/valid.gif' );",
+				"background-image: url( 'http://example.com/valid.gif' )",
+			),
+
+			// No quotes.
+			array(
+				'background-image: url( http://example.com/valid.gif );',
+				'background-image: url( http://example.com/valid.gif )',
+			),
+
+			// Single quotes, extra spaces.
+			array(
+				"background-image: url( '  http://example.com/valid.gif ' );",
+				"background-image: url( '  http://example.com/valid.gif ' )",
+			),
+
+			// Line breaks, single quotes.
+			array(
+				"background-image: url(\n'http://example.com/valid.gif' );",
+				"background-image: url('http://example.com/valid.gif' )",
+			),
+
+			// Tabs not spaces, single quotes.
+			array(
+				"background-image: url(\t'http://example.com/valid.gif'\t\t);",
+				"background-image: url('http://example.com/valid.gif')",
+			),
+
+			// Single quotes, absolute path.
+			array(
+				"background: url('/valid.gif');",
+				"background: url('/valid.gif')",
+			),
+
+			// Single quotes, relative path.
+			array(
+				"background: url('../wp-content/uploads/2018/10/valid.gif');",
+				"background: url('../wp-content/uploads/2018/10/valid.gif')",
+			),
+
+			// Error check: valid property not containing a URL.
+			array(
+				'background: red',
+				'background: red',
+			),
+
+			/*
+			 * Invalid use cases.
+			 */
+
+			// Attribute doesn't support URL properties.
+			array(
+				'color: url( "http://example.com/invalid.gif" );',
+				'',
+			),
+
+			// Mismatched quotes.
+			array(
+				'background-image: url( "http://example.com/valid.gif\' );',
+				'',
+			),
+
+			// Bad protocol, double quotes.
+			array(
+				'background-image: url( "bad://example.com/invalid.gif" );',
+				'',
+			),
+
+			// Bad protocol, single quotes.
+			array(
+				"background-image: url( 'bad://example.com/invalid.gif' );",
+				'',
+			),
+
+			// Bad protocol, single quotes.
+			array(
+				"background-image: url( 'bad://example.com/invalid.gif' );",
+				'',
+			),
+
+			// Bad protocol, single quotes, strange spacing.
+			array(
+				"background-image: url( '  \tbad://example.com/invalid.gif ' );",
+				'',
+			),
+
+			// Bad protocol, no quotes.
+			array(
+				'background-image: url( bad://example.com/invalid.gif );',
+				'',
+			),
+
+			// No URL inside url().
+			array(
+				'background-image: url();',
+				'',
+			),
+
+			// Malformed, no closing `)`.
+			array(
+				'background-image: url( "http://example.com" ;',
+				'',
+			),
+
+			// Malformed, no closing `"`.
+			array(
+				'background-image: url( "http://example.com );',
+				'',
 			),
 		);
 	}

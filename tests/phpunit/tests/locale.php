@@ -11,12 +11,8 @@ class Tests_Locale extends WP_UnitTestCase {
 	protected $locale;
 
 	public function setUp() {
+		parent::setUp();
 		$this->locale = new WP_Locale();
-	}
-
-	public function test_rtl_src_admin_notice() {
-		$this->expectOutputRegex( '#<div class="error"><p>.*</p></div>#' );
-		$this->locale->rtl_src_admin_notice();
 	}
 
 	public function test_get_weekday() {
