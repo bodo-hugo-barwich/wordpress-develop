@@ -5,6 +5,11 @@ wp-config.php
 wp-tests-config.php
 .htaccess
 
+# Project Settings Files
+.buildpath
+.project
+.settings/
+
 # Files and folders related to build/test tools
 /phpunit.xml
 /.phpcs.xml
@@ -35,6 +40,7 @@ wp-tests-config.php
 /src/wp-content/mu-plugins
 /src/wp-content/plugins
 /src/wp-content/themes/*
+!/src/wp-content/themes/theme_portfolio
 !/src/wp-content/themes/twentyten
 !/src/wp-content/themes/twentyeleven
 !/src/wp-content/themes/twentytwelve
