@@ -27,9 +27,9 @@
 if(!function_exists('shortenText')):
 /**
  * This Function
- * @param type $stext
+ * @param string $stext
  * @param int $ilength
- * @return type
+ * @return string
  */
 function shortenText($stext, $ilength = 100)
 {
@@ -67,7 +67,7 @@ function shortenText($stext, $ilength = 100)
           $srstxt = mb_substr($stext, 0, $ilstps);
         else
           $srstxt = mb_substr($stext, 0, $ifstps);
-        
+
       }
       else
         $srstxt = mb_substr($stext, 0, $ishtps);
@@ -88,7 +88,7 @@ if(!function_exists('extractExcerptfromContent')):
  * This Function extracts the Excerpt from the Post Content.<br />
  * It takes into account the "< !--more-- >" Tag and eliminates HTML Tags.
  * @param string $spostcontent
- * @param string $ilength
+ * @param integer $ilength
  * @return string
  */
 function extractExcerptfromContent($spostcontent, $ilength = 55)
@@ -124,16 +124,16 @@ function extractExcerptfromContent($spostcontent, $ilength = 55)
       $htmldoc->loadHTML($sexpthtml);
 
       $lstbdyelems = $htmldoc->getElementsByTagName("body");
-            
+
       if($lstbdyelems->length > 0)
         $bdyelem = $lstbdyelems->item(0);
 
       if(isset($bdyelem))
       {
         //var_dump($bdyelem);
-        
+
         $spostexcerpt = $bdyelem->nodeValue;
-        
+
         if($imrtgps === false)
           $spostexcerpt = shortenText($spostexcerpt, $ilength);
 
@@ -217,7 +217,7 @@ function theme_main_query( $query )
 
     $query->query_vars["post__not_in"] = get_option("sticky_posts");
     $query->query_vars["ignore_sticky_posts"] = 1;
-    
+
   } //if($query->is_category() || $query->is_tag())
 }
 // Hook my above function to the pre_get_posts action

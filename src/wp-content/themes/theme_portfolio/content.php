@@ -19,7 +19,6 @@ $spstimgurl = "";
 
 $arrpstimgs = NULL;
 $ipstimgcnt = -1;
-$ipstimgstrt = -1;
 $spstimgsrh = '/<img[^>]*src="([^\"]*)"[^>]*>/i';
 
 
@@ -91,7 +90,7 @@ if(!empty($spstimgurl))
 
 ?></div>
     <?php
-} //if(!empty($spstimgurl)) 
+} //if(!empty($spstimgurl))
 
 if(!is_singular())
 {
