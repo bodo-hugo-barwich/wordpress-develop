@@ -129,8 +129,8 @@ class WP_REST_Server {
 		 *
 		 * @since 4.4.0
 		 *
-		 * @param WP_Error|null|bool WP_Error if authentication error, null if authentication
-		 *                              method wasn't used, true if authentication succeeded.
+		 * @param WP_Error|null|true $errors WP_Error if authentication error, null if authentication
+		 *                                   method wasn't used, true if authentication succeeded.
 		 */
 		return apply_filters( 'rest_authentication_errors', null );
 	}
@@ -260,7 +260,8 @@ class WP_REST_Server {
 		 * Filters whether the REST API is enabled.
 		 *
 		 * @since 4.4.0
-		 * @deprecated 4.7.0 Use the rest_authentication_errors filter to restrict access to the API
+		 * @deprecated 4.7.0 Use the {@see 'rest_authentication_errors'} filter to
+		 *                   restrict access to the API.
 		 *
 		 * @param bool $rest_enabled Whether the REST API is enabled. Default true.
 		 */
@@ -269,7 +270,11 @@ class WP_REST_Server {
 			array( true ),
 			'4.7.0',
 			'rest_authentication_errors',
-			__( 'The REST API can no longer be completely disabled, the rest_authentication_errors filter can be used to restrict access to the API, instead.' )
+			sprintf(
+				/* translators: %s: rest_authentication_errors */
+				__( 'The REST API can no longer be completely disabled, the %s filter can be used to restrict access to the API, instead.' ),
+				'rest_authentication_errors'
+			)
 		);
 
 		/**

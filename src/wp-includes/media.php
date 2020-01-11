@@ -220,7 +220,7 @@ function image_downsize( $id, $size = 'medium' ) {
 	// If the file isn't an image, attempt to replace its URL with a rendered image from its meta.
 	// Otherwise, a non-image type could be returned.
 	if ( ! $is_image ) {
-		if ( ! empty( $meta['sizes'] ) ) {
+		if ( ! empty( $meta['sizes']['full'] ) ) {
 			$img_url          = str_replace( $img_url_basename, $meta['sizes']['full']['file'], $img_url );
 			$img_url_basename = $meta['sizes']['full']['file'];
 			$width            = $meta['sizes']['full']['width'];
@@ -4295,11 +4295,26 @@ function attachment_url_to_postid( $url ) {
 	}
 
 	$sql = $wpdb->prepare(
-		"SELECT post_id FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value = %s",
+		"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value = %s",
 		$path
 	);
 
-	$post_id = $wpdb->get_var( $sql );
+	$results = $wpdb->get_results( $sql );
+	$post_id = null;
+
+	if ( $results ) {
+		// Use the first available result, but prefer a case-sensitive match, if exists.
+		$post_id = reset( $results )->post_id;
+
+		if ( count( $results ) > 1 ) {
+			foreach ( $results as $result ) {
+				if ( $path === $result->meta_value ) {
+					$post_id = $result->post_id;
+					break;
+				}
+			}
+		}
+	}
 
 	/**
 	 * Filters an attachment id found by URL.

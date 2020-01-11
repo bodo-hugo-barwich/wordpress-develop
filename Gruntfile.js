@@ -108,7 +108,11 @@ module.exports = function(grunt) {
 			],
 			js: [
 				WORKING_DIR + 'wp-admin/js/',
+				WORKING_DIR + 'wp-includes/assets/',
 				WORKING_DIR + 'wp-includes/js/'
+			],
+			'webpack-assets': [
+				WORKING_DIR + 'wp-includes/js/**/*.asset.php'
 			],
 			dynamic: {
 				dot: true,
@@ -137,6 +141,7 @@ module.exports = function(grunt) {
 						expand: true,
 						cwd: SOURCE_DIR,
 						src: buildFiles.concat( [
+							'!assets/**', // Assets is extracted into separate copy tasks.
 							'!js/**', // JavaScript is extracted into separate copy tasks.
 							'!.{svn,git}', // Exclude version control folders.
 							'!wp-includes/version.php', // Exclude version.php
@@ -162,6 +167,9 @@ module.exports = function(grunt) {
 						[ WORKING_DIR + 'wp-includes/js/backbone.js' ]: [ './node_modules/backbone/backbone.js' ],
 						[ WORKING_DIR + 'wp-includes/js/clipboard.js' ]: [ './node_modules/clipboard/dist/clipboard.js' ],
 						[ WORKING_DIR + 'wp-includes/js/hoverIntent.js' ]: [ './node_modules/jquery-hoverintent/jquery.hoverIntent.js' ],
+
+						// Renamed to avoid conflict with jQuery hoverIntent.min.js (after minifying)
+						[ WORKING_DIR + 'wp-includes/js/hoverintent-js.min.js' ]: [ './node_modules/hoverintent/dist/hoverintent.min.js' ],
 						[ WORKING_DIR + 'wp-includes/js/imagesloaded.min.js' ]: [ './node_modules/imagesloaded/imagesloaded.pkgd.min.js' ],
 						[ WORKING_DIR + 'wp-includes/js/jquery/jquery-migrate.js' ]: [ './node_modules/jquery-migrate/dist/jquery-migrate.js' ],
 						[ WORKING_DIR + 'wp-includes/js/jquery/jquery-migrate.min.js' ]: [ './node_modules/jquery-migrate/dist/jquery-migrate.min.js' ],
@@ -341,6 +349,12 @@ module.exports = function(grunt) {
 						dest: WORKING_DIR + 'wp-admin/css/wp-admin-rtl.min.css'
 					}
 				]
+			},
+			'webpack-assets': {
+				expand: true,
+				cwd: WORKING_DIR + 'wp-includes/js/',
+				src: 'dist/*.asset.php',
+				dest: WORKING_DIR + 'wp-includes/assets/'
 			},
 			version: {
 				options: {
@@ -1347,10 +1361,16 @@ module.exports = function(grunt) {
 		'uglify:jqueryform'
 	] );
 
-	grunt.registerTask( 'build:js', [
-		'clean:js',
+	grunt.registerTask( 'build:webpack', [
 		'webpack:prod',
 		'webpack:dev',
+		'copy:webpack-assets',
+		'clean:webpack-assets',
+	] );
+
+	grunt.registerTask( 'build:js', [
+		'clean:js',
+		'build:webpack',
 		'copy:js',
 		'file_append',
 		'uglify:all',

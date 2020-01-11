@@ -559,46 +559,6 @@ class Tests_Post extends WP_UnitTestCase {
 		$this->assertEquals( get_option( 'siteurl' ) . '/2007/10/31/' . $id . '/', $plink );
 	}
 
-	/**
-	 * @ticket 15665
-	 */
-	function test_get_page_by_path_priority() {
-		global $wpdb;
-
-		$attachment = self::factory()->post->create_and_get(
-			array(
-				'post_title' => 'some-page',
-				'post_type'  => 'attachment',
-			)
-		);
-		$page       = self::factory()->post->create_and_get(
-			array(
-				'post_title' => 'some-page',
-				'post_type'  => 'page',
-			)
-		);
-		$other_att  = self::factory()->post->create_and_get(
-			array(
-				'post_title' => 'some-other-page',
-				'post_type'  => 'attachment',
-			)
-		);
-
-		$wpdb->update( $wpdb->posts, array( 'post_name' => 'some-page' ), array( 'ID' => $page->ID ) );
-		clean_post_cache( $page->ID );
-
-		$page = get_post( $page->ID );
-
-		$this->assertEquals( 'some-page', $attachment->post_name );
-		$this->assertEquals( 'some-page', $page->post_name );
-
-		// get_page_by_path() should return a post of the requested type before returning an attachment.
-		$this->assertEquals( $page, get_page_by_path( 'some-page' ) );
-
-		// Make sure get_page_by_path() will still select an attachment when a post of the requested type doesn't exist.
-		$this->assertEquals( $other_att, get_page_by_path( 'some-other-page' ) );
-	}
-
 	function test_wp_publish_post() {
 		$draft_id = self::factory()->post->create( array( 'post_status' => 'draft' ) );
 
@@ -630,6 +590,22 @@ class Tests_Post extends WP_UnitTestCase {
 		wp_publish_post( $post_id );
 		$post = get_post( $post_id );
 
+		$this->assertEquals( 'publish', $post->post_status );
+		$this->assertEquals( $future_date, $post->post_date );
+	}
+
+	/**
+	 * @ticket 48145
+	 */
+	function test_wp_insert_post_should_default_to_publish_if_post_date_is_within_59_seconds_from_current_time() {
+		$future_date = gmdate( 'Y-m-d H:i:s', time() + 59 );
+		$post_id     = self::factory()->post->create(
+			array(
+				'post_date' => $future_date,
+			)
+		);
+
+		$post = get_post( $post_id );
 		$this->assertEquals( 'publish', $post->post_status );
 		$this->assertEquals( $future_date, $post->post_date );
 	}

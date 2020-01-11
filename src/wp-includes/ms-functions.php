@@ -488,7 +488,7 @@ function wpmu_validate_user_signup( $user_name, $user_email ) {
 	/** This filter is documented in wp-includes/user.php */
 	$illegal_logins = (array) apply_filters( 'illegal_user_logins', array() );
 
-	if ( in_array( strtolower( $user_name ), array_map( 'strtolower', $illegal_logins ) ) ) {
+	if ( in_array( strtolower( $user_name ), array_map( 'strtolower', $illegal_logins ), true ) ) {
 		$errors->add( 'user_name', __( 'Sorry, that username is not allowed.' ) );
 	}
 
@@ -1422,10 +1422,12 @@ Disable these notifications: %4$s'
 	 * to the network administrator.
 	 *
 	 * @since MU (3.0.0)
+	 * @since 5.4.0 The `$blog_id` parameter was added.
 	 *
-	 * @param string $msg Email body.
+	 * @param string $msg     Email body.
+	 * @param int    $blog_id The new site's ID.
 	 */
-	$msg = apply_filters( 'newblog_notify_siteadmin', $msg );
+	$msg = apply_filters( 'newblog_notify_siteadmin', $msg, $blog_id );
 
 	/* translators: New site notification email subject. %s: New site URL. */
 	wp_mail( $email, sprintf( __( 'New Site Registration: %s' ), $siteurl ), $msg );

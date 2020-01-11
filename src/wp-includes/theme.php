@@ -79,7 +79,8 @@ function wp_get_themes( $args = array() ) {
 		if ( isset( $_themes[ $theme_root['theme_root'] . '/' . $theme ] ) ) {
 			$themes[ $theme ] = $_themes[ $theme_root['theme_root'] . '/' . $theme ];
 		} else {
-			$themes[ $theme ]                                    = new WP_Theme( $theme, $theme_root['theme_root'] );
+			$themes[ $theme ] = new WP_Theme( $theme, $theme_root['theme_root'] );
+
 			$_themes[ $theme_root['theme_root'] . '/' . $theme ] = $themes[ $theme ];
 		}
 	}
@@ -3143,7 +3144,7 @@ function _wp_customize_publish_changeset( $new_status, $old_status, $changeset_p
  *
  * @param array $post_data          An array of slashed post data.
  * @param array $supplied_post_data An array of sanitized, but otherwise unmodified post data.
- * @returns array Filtered data.
+ * @return array Filtered data.
  */
 function _wp_customize_changeset_filter_insert_post_data( $post_data, $supplied_post_data ) {
 	if ( isset( $post_data['post_type'] ) && 'customize_changeset' === $post_data['post_type'] ) {

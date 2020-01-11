@@ -1252,7 +1252,7 @@ class Tests_WP_Customize_Manager extends WP_UnitTestCase {
 	 *
 	 * @param array $data    Data.
 	 * @param array $context Context.
-	 * @returns array Data.
+	 * @return array Data.
 	 */
 	function filter_customize_changeset_save_data( $data, $context ) {
 		$this->customize_changeset_save_data_call_count += 1;
@@ -2827,6 +2827,14 @@ class Tests_WP_Customize_Manager extends WP_UnitTestCase {
 
 		$this->manager->set_return_url( admin_url( 'edit.php?trashed=1' ) );
 		$this->assertEquals( admin_url( 'edit.php' ), $this->manager->get_return_url() );
+	}
+
+	/**
+	 * @ticket 46686
+	 */
+	function test_return_url_with_deactivated_theme() {
+		$this->manager->set_return_url( admin_url( 'themes.php?page=mytheme_documentation' ) );
+		$this->assertEquals( admin_url( 'themes.php' ), $this->manager->get_return_url() );
 	}
 
 	/**

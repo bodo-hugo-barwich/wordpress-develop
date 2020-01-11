@@ -1339,8 +1339,8 @@ function single_post_title( $prefix = '', $display = true ) {
 	 *
 	 * @since 0.71
 	 *
-	 * @param string $_post_title The single post page title.
-	 * @param object $_post       The current queried object as returned by get_queried_object().
+	 * @param string  $_post_title The single post page title.
+	 * @param WP_Post $_post       The current post.
 	 */
 	$title = apply_filters( 'single_post_title', $_post->post_title, $_post );
 	if ( $display ) {
@@ -3150,7 +3150,7 @@ function wp_site_icon() {
 	}
 	$icon_180 = get_site_icon_url( 180 );
 	if ( $icon_180 ) {
-		$meta_tags[] = sprintf( '<link rel="apple-touch-icon-precomposed" href="%s" />', esc_url( $icon_180 ) );
+		$meta_tags[] = sprintf( '<link rel="apple-touch-icon" href="%s" />', esc_url( $icon_180 ) );
 	}
 	$icon_270 = get_site_icon_url( 270 );
 	if ( $icon_270 ) {

@@ -654,7 +654,7 @@ function media_buttons( $editor_id = 'content' ) {
 	 *
 	 * @param string $string Media buttons context. Default empty.
 	 */
-	$legacy_filter = apply_filters( 'media_buttons_context', '' );
+	$legacy_filter = apply_filters_deprecated( 'media_buttons_context', array( '' ), '3.5.0', 'media_buttons' );
 
 	if ( $legacy_filter ) {
 		// #WP22559. Close <a> if a plugin started by closing <a> to open their own <a> tag.
@@ -1268,7 +1268,7 @@ function media_single_attachment_fields_to_edit( $form_fields, $post ) {
 }
 
 /**
- * Retrieves the post non-image attachment fields to edito form fields.
+ * Retrieves the post non-image attachment fields to edit form fields.
  *
  * @since 2.8.0
  *
