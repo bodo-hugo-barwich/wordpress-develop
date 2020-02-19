@@ -63,8 +63,12 @@ module.exports = function( env = { environment: 'production', watch: false, buil
 	buildTarget = buildTarget  + '/wp-includes';
 
 	const WORDPRESS_NAMESPACE = '@wordpress/';
+	const BUNDLED_PACKAGES = [ '@wordpress/icons' ];
 	const packages = Object.keys( dependencies )
-		.filter( ( packageName ) => packageName.startsWith( WORDPRESS_NAMESPACE ) )
+		.filter( ( packageName ) =>
+ 			! BUNDLED_PACKAGES.includes( packageName ) &&
+ 			packageName.startsWith( WORDPRESS_NAMESPACE )
+ 		)
 		.map( ( packageName ) => packageName.replace( WORDPRESS_NAMESPACE, '' ) );
 
 	const vendors = {
@@ -73,6 +77,8 @@ module.exports = function( env = { environment: 'production', watch: false, buil
 		'wp-polyfill-fetch.js': 'whatwg-fetch/dist/fetch.umd.js',
 		'wp-polyfill-element-closest.js': 'element-closest/element-closest.js',
 		'wp-polyfill-node-contains.js': 'polyfill-library/polyfills/Node/prototype/contains/polyfill.js',
+		'wp-polyfill-url.js': 'polyfill-library/polyfills/URL/polyfill.js',
+		'wp-polyfill-dom-rect.js': 'polyfill-library/polyfills/DOMRect/polyfill.js',
 		'wp-polyfill-formdata.js': 'formdata-polyfill/FormData.js',
 		'moment.js': 'moment/moment.js',
 		'react.js': 'react/umd/react.development.js',
@@ -92,20 +98,34 @@ module.exports = function( env = { environment: 'production', watch: false, buil
 		'wp-polyfill-fetch.min.js': 'whatwg-fetch/dist/fetch.umd.js',
 		'wp-polyfill-element-closest.min.js': 'element-closest/element-closest.js',
 		'wp-polyfill-node-contains.min.js': 'polyfill-library/polyfills/Node/prototype/contains/polyfill.js',
+		'wp-polyfill-url.min.js': 'polyfill-library/polyfills/URL/polyfill.js',
+		'wp-polyfill-dom-rect.min.js': 'polyfill-library/polyfills/DOMRect/polyfill.js',
 	};
 
+	const blockNames = [
+		'archives',
+		'block',
+		'calendar',
+		'categories',
+		'latest-comments',
+		'latest-posts',
+		'rss',
+		'search',
+		'shortcode',
+		'social-link',
+		'tag-cloud',
+	];
 	const phpFiles = {
 		'block-serialization-default-parser/parser.php': 'wp-includes/class-wp-block-parser.php',
-		'block-library/src/archives/index.php': 'wp-includes/blocks/archives.php',
-		'block-library/src/block/index.php': 'wp-includes/blocks/block.php',
-		'block-library/src/calendar/index.php': 'wp-includes/blocks/calendar.php',
-		'block-library/src/categories/index.php': 'wp-includes/blocks/categories.php',
-		'block-library/src/latest-comments/index.php': 'wp-includes/blocks/latest-comments.php',
-		'block-library/src/latest-posts/index.php': 'wp-includes/blocks/latest-posts.php',
-		'block-library/src/rss/index.php': 'wp-includes/blocks/rss.php',
-		'block-library/src/search/index.php': 'wp-includes/blocks/search.php',
-		'block-library/src/shortcode/index.php': 'wp-includes/blocks/shortcode.php',
-		'block-library/src/tag-cloud/index.php': 'wp-includes/blocks/tag-cloud.php',
+		...blockNames.reduce( ( files, blockName ) => {
+			files[ `block-library/src/${ blockName }/index.php` ] = `wp-includes/blocks/${ blockName }.php`;
+			return files;
+		} , {} ),
+	};
+	const blockMetadataCopies = {
+		from: join( baseDir, `node_modules/@wordpress/block-library/src/+(${ blockNames.join( '|' ) })/block.json` ),
+		test: new RegExp( `\/([^/]+)\/block\.json$` ),
+		to: join( baseDir, `${ buildTarget }/blocks/[1]/block.json` ),
 	};
 
 	const developmentCopies = mapVendorCopies( vendors, buildTarget );
@@ -200,6 +220,7 @@ module.exports = function( env = { environment: 'production', watch: false, buil
 				'token-list',
 				'server-side-render',
 				'shortcode',
+				'warning',
 			].map( camelCaseDash ) ),
 			new CustomTemplatedPathPlugin( {
 				basename( path, data ) {
@@ -231,6 +252,7 @@ module.exports = function( env = { environment: 'production', watch: false, buil
 					...vendorCopies,
 					...cssCopies,
 					...phpCopies,
+					blockMetadataCopies,
 				],
 			),
 		],

@@ -161,7 +161,7 @@ function _wp_die_handler( $message, $title = '', $args = array() ) {
 	if ( ! $GLOBALS['_wp_die_disabled'] ) {
 		_wp_die_handler_txt( $message, $title, $args );
 	} else {
-		//Ignore at our peril
+		// Ignore at our peril.
 	}
 }
 
@@ -285,7 +285,7 @@ function _wp_rest_server_class_filter() {
 }
 
 // Skip `setcookie` calls in auth_cookie functions due to warning:
-// Cannot modify header information - headers already sent by ...
+// Cannot modify header information - headers already sent by...
 tests_add_filter( 'send_auth_cookies', '__return_false' );
 
 /**
@@ -304,6 +304,7 @@ function _unhook_block_registration() {
 	remove_action( 'init', 'register_block_core_rss' );
 	remove_action( 'init', 'register_block_core_search' );
 	remove_action( 'init', 'register_block_core_shortcode' );
+	remove_action( 'init', 'register_block_core_social_link' );
 	remove_action( 'init', 'register_block_core_social_link' );
 	remove_action( 'init', 'register_block_core_tag_cloud' );
 }

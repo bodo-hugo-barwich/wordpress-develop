@@ -25,7 +25,6 @@ final class _WP_Editors {
 	private static $has_medialib       = false;
 	private static $editor_buttons_css = true;
 	private static $drag_drop_upload   = false;
-	private static $old_dfw_compat     = false;
 	private static $translation;
 	private static $tinymce_scripts_printed = false;
 	private static $link_dialog_printed     = false;
@@ -37,7 +36,8 @@ final class _WP_Editors {
 	 *
 	 * @since 3.3.0
 	 *
-	 * @param string $editor_id ID for the current editor instance.
+	 * @param string $editor_id HTML ID for the textarea and TinyMCE and Quicktags instances.
+	 *                          Should not contain square brackets.
 	 * @param array  $settings {
 	 *     Array of editor arguments.
 	 *
@@ -58,8 +58,7 @@ final class _WP_Editors {
 	 *     @type string     $editor_class      Extra classes to add to the editor textarea element. Default empty.
 	 *     @type bool       $teeny             Whether to output the minimal editor config. Examples include
 	 *                                         Press This and the Comment editor. Default false.
-	 *     @type bool       $dfw               Deprecated in 4.1. Since 4.3 used only to enqueue wp-fullscreen-stub.js
-	 *                                         for backward compatibility.
+	 *     @type bool       $dfw               Deprecated in 4.1. Unused.
 	 *     @type bool|array $tinymce           Whether to load TinyMCE. Can be used to pass settings directly to
 	 *                                         TinyMCE using an array. Default true.
 	 *     @type bool|array $quicktags         Whether to load Quicktags. Can be used to pass settings directly to
@@ -77,7 +76,7 @@ final class _WP_Editors {
 		 * @see _WP_Editors::parse_settings()
 		 *
 		 * @param array  $settings  Array of editor arguments.
-		 * @param string $editor_id ID for the current editor instance. Accepts 'classic-block'
+		 * @param string $editor_id Unique editor identifier, e.g. 'content'. Accepts 'classic-block'
 		 *                          when called from block editor's Classic block.
 		 */
 		$settings = apply_filters( 'wp_editor_settings', $settings, $editor_id );
@@ -97,7 +96,6 @@ final class _WP_Editors {
 				'editor_css'          => '',
 				'editor_class'        => '',
 				'teeny'               => false,
-				'dfw'                 => false,
 				'_content_editor_dfw' => false,
 				'tinymce'             => true,
 				'quicktags'           => true,
@@ -121,10 +119,6 @@ final class _WP_Editors {
 
 		if ( self::$this_quicktags ) {
 			self::$has_quicktags = true;
-		}
-
-		if ( $set['dfw'] ) {
-			self::$old_dfw_compat = true;
 		}
 
 		if ( empty( $set['editor_height'] ) ) {
@@ -154,9 +148,10 @@ final class _WP_Editors {
 	 *
 	 * @since 3.3.0
 	 *
-	 * @param string $content The initial content of the editor.
-	 * @param string $editor_id ID for the textarea and TinyMCE and Quicktags instances (can contain only ASCII letters and numbers).
-	 * @param array $settings See _WP_Editors::parse_settings() for description.
+	 * @param string $content   Initial content for the editor.
+	 * @param string $editor_id HTML ID for the textarea and TinyMCE and Quicktags instances.
+	 *                          Should not contain square brackets.
+	 * @param array  $settings  See _WP_Editors::parse_settings() for description.
 	 */
 	public static function editor( $content, $editor_id, $settings = array() ) {
 		$set            = self::parse_settings( $editor_id, $settings );
@@ -225,7 +220,7 @@ final class _WP_Editors {
 				self::$has_medialib = true;
 
 				if ( ! function_exists( 'media_buttons' ) ) {
-					include( ABSPATH . 'wp-admin/includes/media.php' );
+					require ABSPATH . 'wp-admin/includes/media.php';
 				}
 
 				echo '<div id="wp-' . $editor_id_attr . '-media-buttons" class="wp-media-buttons">';
@@ -248,7 +243,7 @@ final class _WP_Editors {
 		$quicktags_toolbar = '';
 
 		if ( self::$this_quicktags ) {
-			if ( 'content' === $editor_id && ! empty( $GLOBALS['current_screen'] ) && $GLOBALS['current_screen']->base === 'post' ) {
+			if ( 'content' === $editor_id && ! empty( $GLOBALS['current_screen'] ) && 'post' === $GLOBALS['current_screen']->base ) {
 				$toolbar_id = 'ed_toolbar';
 			} else {
 				$toolbar_id = 'qt_' . $editor_id_attr . '_toolbar';
@@ -293,7 +288,7 @@ final class _WP_Editors {
 			remove_filter( 'the_editor_content', 'format_for_editor' );
 		}
 
-		// Back-compat for the `htmledit_pre` and `richedit_pre` filters
+		// Back-compat for the `htmledit_pre` and `richedit_pre` filters.
 		if ( 'html' === $default_editor && has_filter( 'htmledit_pre' ) ) {
 			/** This filter is documented in wp-includes/deprecated.php */
 			$content = apply_filters_deprecated( 'htmledit_pre', array( $content ), '4.3.0', 'format_for_editor' );
@@ -317,8 +312,8 @@ final class _WP_Editors {
 	 *
 	 * @global string $tinymce_version
 	 *
-	 * @param string $editor_id
-	 * @param array  $set
+	 * @param string $editor_id Unique editor identifier, e.g. 'content'.
+	 * @param array  $set       Array of editor arguments.
 	 */
 	public static function editor_settings( $editor_id, $set ) {
 		global $tinymce_version;
@@ -360,7 +355,7 @@ final class _WP_Editors {
 			 * @since 3.3.0
 			 *
 			 * @param array  $qtInit    Quicktags settings.
-			 * @param string $editor_id The unique editor ID, e.g. 'content'.
+			 * @param string $editor_id Unique editor identifier, e.g. 'content'.
 			 */
 			$qtInit = apply_filters( 'quicktags_settings', $qtInit, $editor_id );
 
@@ -496,7 +491,7 @@ final class _WP_Editors {
 						if ( ! empty( $mce_external_languages ) ) {
 							foreach ( $mce_external_languages as $name => $path ) {
 								if ( @is_file( $path ) && @is_readable( $path ) ) {
-									include_once( $path );
+									include_once $path;
 									$ext_plugins   .= $strings . "\n";
 									$loaded_langs[] = $name;
 								}
@@ -514,7 +509,7 @@ final class _WP_Editors {
 							$plugurl                       = dirname( $url );
 							$strings                       = '';
 
-							// Try to load langs/[locale].js and langs/[locale]_dlg.js
+							// Try to load langs/[locale].js and langs/[locale]_dlg.js.
 							if ( ! in_array( $name, $loaded_langs, true ) ) {
 								$path = str_replace( content_url(), '', $plugurl );
 								$path = WP_CONTENT_DIR . $path . '/langs/';
@@ -568,9 +563,11 @@ final class _WP_Editors {
 
 				$mce_css = $settings['content_css'];
 
-				// The `editor-style.css` added by the theme is generally intended for the editor instance on the Edit Post screen.
-				// Plugins that use wp_editor() on the front-end can decide whether to add the theme stylesheet
-				// by using `get_editor_stylesheets()` and the `mce_css` or `tiny_mce_before_init` filters, see below.
+				/*
+				 * The `editor-style.css` added by the theme is generally intended for the editor instance on the Edit Post screen.
+				 * Plugins that use wp_editor() on the front-end can decide whether to add the theme stylesheet
+				 * by using `get_editor_stylesheets()` and the `mce_css` or `tiny_mce_before_init` filters, see below.
+				 */
 				if ( is_admin() ) {
 					$editor_styles = get_editor_stylesheets();
 
@@ -746,7 +743,7 @@ final class _WP_Editors {
 
 				$page_template = get_page_template_slug( $post );
 
-				if ( $page_template !== false ) {
+				if ( false !== $page_template ) {
 					$page_template = empty( $page_template ) ? 'default' : str_replace( '.', '-', basename( $page_template, '.php' ) );
 					$body_class   .= ' page-template-' . sanitize_html_class( $page_template );
 				}
@@ -771,7 +768,7 @@ final class _WP_Editors {
 				'body_class'        => $body_class,
 			);
 
-			// Merge with the first part of the init array
+			// Merge with the first part of the init array.
 			$mceInit = array_merge( self::$first_init, $mceInit );
 
 			if ( is_array( $set['tinymce'] ) ) {
@@ -819,7 +816,7 @@ final class _WP_Editors {
 			}
 
 			self::$mce_settings[ $editor_id ] = $mceInit;
-		} // end if self::$this_tinymce
+		} // End if self::$this_tinymce.
 	}
 
 	/**
@@ -870,10 +867,6 @@ final class _WP_Editors {
 			wp_enqueue_script( 'jquery-ui-autocomplete' );
 		}
 
-		if ( self::$old_dfw_compat ) {
-			wp_enqueue_script( 'wp-fullscreen-stub' );
-		}
-
 		if ( self::$has_medialib ) {
 			add_thickbox();
 			wp_enqueue_script( 'media-upload' );
@@ -913,7 +906,7 @@ final class _WP_Editors {
 
 		self::enqueue_scripts( true );
 
-		// Also add wp-includes/css/editor.css
+		// Also add wp-includes/css/editor.css.
 		wp_enqueue_style( 'editor-buttons' );
 
 		if ( is_admin() ) {
@@ -946,9 +939,11 @@ final class _WP_Editors {
 				$settings['directionality'] = 'rtl';
 			}
 
-			// In production all plugins are loaded (they are in wp-editor.js.gz).
-			// The 'wpview', 'wpdialogs', and 'media' TinyMCE plugins are not initialized by default.
-			// Can be added from js by using the 'wp-before-tinymce-init' event.
+			/*
+			 * In production all plugins are loaded (they are in wp-editor.js.gz).
+			 * The 'wpview', 'wpdialogs', and 'media' TinyMCE plugins are not initialized by default.
+			 * Can be added from js by using the 'wp-before-tinymce-init' event.
+			 */
 			$settings['plugins'] = implode(
 				',',
 				array(
@@ -1033,7 +1028,7 @@ final class _WP_Editors {
 	public static function get_mce_locale() {
 		if ( empty( self::$mce_locale ) ) {
 			$mce_locale       = get_user_locale();
-			self::$mce_locale = empty( $mce_locale ) ? 'en' : strtolower( substr( $mce_locale, 0, 2 ) ); // ISO 639-1
+			self::$mce_locale = empty( $mce_locale ) ? 'en' : strtolower( substr( $mce_locale, 0, 2 ) ); // ISO 639-1.
 		}
 
 		return self::$mce_locale;
@@ -1107,7 +1102,7 @@ final class _WP_Editors {
 			'menubar'                      => false,
 			'branding'                     => false,
 
-			// Limit the preview styles in the menu/toolbar
+			// Limit the preview styles in the menu/toolbar.
 			'preview_styles'               => 'font-family font-size font-weight font-style text-decoration text-transform',
 
 			'end_container_on_empty_block' => true,
@@ -1120,7 +1115,7 @@ final class _WP_Editors {
 		$suffix  = SCRIPT_DEBUG ? '' : '.min';
 		$version = 'ver=' . get_bloginfo( 'version' );
 
-		// Default stylesheets
+		// Default stylesheets.
 		$settings['content_css'] = includes_url( "css/dashicons$suffix.css?$version" ) . ',' .
 			includes_url( "js/tinymce/skins/wordpress/wp-content.css?$version" );
 
@@ -1135,7 +1130,7 @@ final class _WP_Editors {
 	private static function get_translation() {
 		if ( empty( self::$translation ) ) {
 			self::$translation = array(
-				// Default TinyMCE strings
+				// Default TinyMCE strings.
 				'New document'                         => __( 'New document' ),
 				'Formats'                              => _x( 'Formats', 'TinyMCE' ),
 
@@ -1200,7 +1195,7 @@ final class _WP_Editors {
 				'Upper Roman'                          => _x( 'Upper Roman', 'list style' ),
 				'Lower Roman'                          => _x( 'Lower Roman', 'list style' ),
 
-				// Anchor plugin
+				// Anchor plugin.
 				'Name'                                 => _x( 'Name', 'Name of link anchor (TinyMCE)' ),
 				'Anchor'                               => _x( 'Anchor', 'Link anchor (TinyMCE)' ),
 				'Anchors'                              => _x( 'Anchors', 'Link anchors (TinyMCE)' ),
@@ -1208,7 +1203,7 @@ final class _WP_Editors {
 					__( 'Id should start with a letter, followed only by letters, numbers, dashes, dots, colons or underscores.' ),
 				'Id'                                   => _x( 'Id', 'Id for link anchor (TinyMCE)' ),
 
-				// Fullpage plugin
+				// Fullpage plugin.
 				'Document properties'                  => __( 'Document properties' ),
 				'Robots'                               => __( 'Robots' ),
 				'Title'                                => __( 'Title' ),
@@ -1217,7 +1212,7 @@ final class _WP_Editors {
 				'Description'                          => __( 'Description' ),
 				'Author'                               => __( 'Author' ),
 
-				// Media, image plugins
+				// Media, image plugins.
 				'Image'                                => __( 'Image' ),
 				'Insert/edit image'                    => array( __( 'Insert/edit image' ), 'accessM' ),
 				'General'                              => __( 'General' ),
@@ -1243,7 +1238,7 @@ final class _WP_Editors {
 				'Insert video'                         => __( 'Insert video' ),
 				'Embed'                                => __( 'Embed' ),
 
-				// Each of these have a corresponding plugin
+				// Each of these have a corresponding plugin.
 				'Special character'                    => __( 'Special character' ),
 				'Right to left'                        => _x( 'Right to left', 'editor button' ),
 				'Left to right'                        => _x( 'Left to right', 'editor button' ),
@@ -1261,7 +1256,7 @@ final class _WP_Editors {
 				'Insert/edit link'                     => array( __( 'Insert/edit link' ), 'metaK' ),
 				'Remove link'                          => array( __( 'Remove link' ), 'accessS' ),
 
-				// Link plugin
+				// Link plugin.
 				'Link'                                 => __( 'Link' ),
 				'Insert link'                          => __( 'Insert link' ),
 				'Target'                               => __( 'Target' ),
@@ -1275,13 +1270,13 @@ final class _WP_Editors {
 
 				'Color'                                => __( 'Color' ),
 				'Custom color'                         => __( 'Custom color' ),
-				'Custom...'                            => _x( 'Custom...', 'label for custom color' ), // no ellipsis
+				'Custom...'                            => _x( 'Custom...', 'label for custom color' ), // No ellipsis.
 				'No color'                             => __( 'No color' ),
 				'R'                                    => _x( 'R', 'Short for red in RGB' ),
 				'G'                                    => _x( 'G', 'Short for green in RGB' ),
 				'B'                                    => _x( 'B', 'Short for blue in RGB' ),
 
-				// Spelling, search/replace plugins
+				// Spelling, search/replace plugins.
 				'Could not find the specified string.' => __( 'Could not find the specified string.' ),
 				'Replace'                              => _x( 'Replace', 'find/replace' ),
 				'Next'                                 => _x( 'Next', 'find/replace' ),
@@ -1299,7 +1294,7 @@ final class _WP_Editors {
 				'Ignore'                               => _x( 'Ignore', 'spellcheck' ),
 				'Add to Dictionary'                    => __( 'Add to Dictionary' ),
 
-				// TinyMCE tables
+				// TinyMCE tables.
 				'Insert table'                         => __( 'Insert table' ),
 				'Delete table'                         => __( 'Delete table' ),
 				'Table properties'                     => __( 'Table properties' ),
@@ -1373,7 +1368,7 @@ final class _WP_Editors {
 				'Your browser doesn\'t support direct access to the clipboard. Please use the Ctrl+X/C/V keyboard shortcuts instead.' =>
 					__( 'Your browser does not support direct access to the clipboard. Please use keyboard shortcuts or your browser&#8217;s edit menu instead.' ),
 
-				// TinyMCE menus
+				// TinyMCE menus.
 				'Insert'                               => _x( 'Insert', 'TinyMCE menu' ),
 				'File'                                 => _x( 'File', 'TinyMCE menu' ),
 				'Edit'                                 => _x( 'Edit', 'TinyMCE menu' ),
@@ -1382,23 +1377,23 @@ final class _WP_Editors {
 				'Table'                                => _x( 'Table', 'TinyMCE menu' ),
 				'Format'                               => _x( 'Format', 'TinyMCE menu' ),
 
-				// WordPress strings
+				// WordPress strings.
 				'Toolbar Toggle'                       => array( __( 'Toolbar Toggle' ), 'accessZ' ),
 				'Insert Read More tag'                 => array( __( 'Insert Read More tag' ), 'accessT' ),
 				'Insert Page Break tag'                => array( __( 'Insert Page Break tag' ), 'accessP' ),
-				'Read more...'                         => __( 'Read more...' ), // Title on the placeholder inside the editor (no ellipsis)
+				'Read more...'                         => __( 'Read more...' ), // Title on the placeholder inside the editor (no ellipsis).
 				'Distraction-free writing mode'        => array( __( 'Distraction-free writing mode' ), 'accessW' ),
-				'No alignment'                         => __( 'No alignment' ), // Tooltip for the 'alignnone' button in the image toolbar
-				'Remove'                               => __( 'Remove' ), // Tooltip for the 'remove' button in the image toolbar
-				'Edit|button'                          => __( 'Edit' ), // Tooltip for the 'edit' button in the image toolbar
-				'Paste URL or type to search'          => __( 'Paste URL or type to search' ), // Placeholder for the inline link dialog
-				'Apply'                                => __( 'Apply' ), // Tooltip for the 'apply' button in the inline link dialog
-				'Link options'                         => __( 'Link options' ), // Tooltip for the 'link options' button in the inline link dialog
-				'Visual'                               => _x( 'Visual', 'Name for the Visual editor tab' ), // Editor switch tab label
-				'Text'                                 => _x( 'Text', 'Name for the Text editor tab (formerly HTML)' ), // Editor switch tab label
-				'Add Media'                            => array( __( 'Add Media' ), 'accessM' ), // Tooltip for the 'Add Media' button in the block editor Classic block
+				'No alignment'                         => __( 'No alignment' ), // Tooltip for the 'alignnone' button in the image toolbar.
+				'Remove'                               => __( 'Remove' ),       // Tooltip for the 'remove' button in the image toolbar.
+				'Edit|button'                          => __( 'Edit' ),         // Tooltip for the 'edit' button in the image toolbar.
+				'Paste URL or type to search'          => __( 'Paste URL or type to search' ), // Placeholder for the inline link dialog.
+				'Apply'                                => __( 'Apply' ),        // Tooltip for the 'apply' button in the inline link dialog.
+				'Link options'                         => __( 'Link options' ), // Tooltip for the 'link options' button in the inline link dialog.
+				'Visual'                               => _x( 'Visual', 'Name for the Visual editor tab' ),             // Editor switch tab label.
+				'Text'                                 => _x( 'Text', 'Name for the Text editor tab (formerly HTML)' ), // Editor switch tab label.
+				'Add Media'                            => array( __( 'Add Media' ), 'accessM' ), // Tooltip for the 'Add Media' button in the block editor Classic block.
 
-				// Shortcuts help modal
+				// Shortcuts help modal.
 				'Keyboard Shortcuts'                   => array( __( 'Keyboard Shortcuts' ), 'accessH' ),
 				'Classic Block Keyboard Shortcuts'     => __( 'Classic Block Keyboard Shortcuts' ),
 				'Default shortcuts,'                   => __( 'Default shortcuts,' ),
@@ -1496,7 +1491,7 @@ final class _WP_Editors {
 			}
 		}
 
-		// Set direction
+		// Set direction.
 		if ( is_rtl() ) {
 			$mce_translation['_dir'] = 'rtl';
 		}
@@ -1643,7 +1638,7 @@ final class _WP_Editors {
 			self::print_tinymce_scripts();
 
 			if ( self::$ext_plugins ) {
-				// Load the old-format English strings to prevent unsightly labels in old style popups
+				// Load the old-format English strings to prevent unsightly labels in old style popups.
 				echo "<script type='text/javascript' src='{$baseurl}/langs/wp-langs-en.js?$version'></script>\n";
 			}
 		}
@@ -1738,7 +1733,7 @@ final class _WP_Editors {
 	 * @since 3.1.0
 	 *
 	 * @param array $args Optional. Accepts 'pagenum' and 's' (search) arguments.
-	 * @return false|array Results.
+	 * @return array|false Results.
 	 */
 	public static function wp_link_query( $args = array() ) {
 		$pts      = get_post_types( array( 'public' => true ), 'objects' );
@@ -1828,14 +1823,14 @@ final class _WP_Editors {
 	 * @since 3.1.0
 	 */
 	public static function wp_link_dialog() {
-		// Run once
+		// Run once.
 		if ( self::$link_dialog_printed ) {
 			return;
 		}
 
 		self::$link_dialog_printed = true;
 
-		// display: none is required here, see #WP27605
+		// `display: none` is required here, see #WP27605.
 		?>
 		<div id="wp-link-backdrop" style="display: none"></div>
 		<div id="wp-link-wrap" class="wp-core-ui" style="display: none" role="dialog" aria-labelledby="link-modal-title">

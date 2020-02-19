@@ -280,7 +280,7 @@ function comment_guid( $comment_id = null ) {
  * @since 2.5.0
  *
  * @param int|WP_Comment $comment_id Optional comment object or id. Defaults to global comment object.
- * @return false|string false on failure or guid for comment on success.
+ * @return string|false GUID for comment on success, false on failure.
  */
 function get_comment_guid( $comment_id = null ) {
 	$comment = get_comment( $comment_id );
@@ -471,11 +471,11 @@ function rss_enclosure() {
 	}
 
 	foreach ( (array) get_post_custom() as $key => $val ) {
-		if ( $key == 'enclosure' ) {
+		if ( 'enclosure' === $key ) {
 			foreach ( (array) $val as $enc ) {
 				$enclosure = explode( "\n", $enc );
 
-				// only get the first element, e.g. audio/mpeg from 'audio/mpeg mpga mp2 mp3'
+				// Only get the first element, e.g. 'audio/mpeg' from 'audio/mpeg mpga mp2 mp3'.
 				$t    = preg_split( '/[ \t]/', trim( $enclosure[2] ) );
 				$type = $t[0];
 
@@ -511,7 +511,7 @@ function atom_enclosure() {
 	}
 
 	foreach ( (array) get_post_custom() as $key => $val ) {
-		if ( $key == 'enclosure' ) {
+		if ( 'enclosure' === $key ) {
 			foreach ( (array) $val as $enc ) {
 				$enclosure = explode( "\n", $enc );
 				/**
@@ -751,19 +751,19 @@ function feed_content_type( $type = '' ) {
  */
 function fetch_feed( $url ) {
 	if ( ! class_exists( 'SimplePie', false ) ) {
-		require_once( ABSPATH . WPINC . '/class-simplepie.php' );
+		require_once ABSPATH . WPINC . '/class-simplepie.php';
 	}
 
-	require_once( ABSPATH . WPINC . '/class-wp-feed-cache.php' );
-	require_once( ABSPATH . WPINC . '/class-wp-feed-cache-transient.php' );
-	require_once( ABSPATH . WPINC . '/class-wp-simplepie-file.php' );
-	require_once( ABSPATH . WPINC . '/class-wp-simplepie-sanitize-kses.php' );
+	require_once ABSPATH . WPINC . '/class-wp-feed-cache.php';
+	require_once ABSPATH . WPINC . '/class-wp-feed-cache-transient.php';
+	require_once ABSPATH . WPINC . '/class-wp-simplepie-file.php';
+	require_once ABSPATH . WPINC . '/class-wp-simplepie-sanitize-kses.php';
 
 	$feed = new SimplePie();
 
 	$feed->set_sanitize_class( 'WP_SimplePie_Sanitize_KSES' );
 	// We must manually overwrite $feed->sanitize because SimplePie's
-	// constructor sets it before we have a chance to set the sanitization class
+	// constructor sets it before we have a chance to set the sanitization class.
 	$feed->sanitize = new WP_SimplePie_Sanitize_KSES();
 
 	$feed->set_cache_class( 'WP_Feed_Cache' );

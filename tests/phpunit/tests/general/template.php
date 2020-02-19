@@ -6,7 +6,7 @@
  * @group site_icon
  */
 
-require_once( ABSPATH . 'wp-admin/includes/class-wp-site-icon.php' );
+require_once ABSPATH . 'wp-admin/includes/class-wp-site-icon.php';
 
 class Tests_General_Template extends WP_UnitTestCase {
 	protected $wp_site_icon;
@@ -234,7 +234,7 @@ class Tests_General_Template extends WP_UnitTestCase {
 		$upload              = wp_upload_bits( wp_basename( $filename ), null, $contents );
 		$this->site_icon_url = $upload['url'];
 
-		// Save the data
+		// Save the data.
 		$this->site_icon_id = $this->_make_attachment( $upload );
 		return $this->site_icon_id;
 	}
@@ -432,8 +432,8 @@ class Tests_General_Template extends WP_UnitTestCase {
 		$GLOBALS['post'] = $post;
 
 		$expected = '1453390476';
-		$d        = 'G';
-		$actual   = get_the_modified_time( $d );
+		$format   = 'G';
+		$actual   = get_the_modified_time( $format );
 		$this->assertEquals( $expected, $actual );
 	}
 
@@ -445,7 +445,7 @@ class Tests_General_Template extends WP_UnitTestCase {
 	 * @since 4.6.0
 	 */
 	function test_get_the_modified_time_failures_are_filtered() {
-		// Remove global post objet
+		// Remove global post object.
 		$GLOBALS['post'] = null;
 
 		$expected = 'filtered modified time failure result';
@@ -479,9 +479,9 @@ class Tests_General_Template extends WP_UnitTestCase {
 			'post_date_gmt' => '2016-01-21 15:34:36',
 		);
 		$post_id  = $this->factory->post->create( $details );
-		$d        = 'Y-m-d';
+		$format   = 'Y-m-d';
 		$expected = '2016-01-21';
-		$actual   = get_the_modified_date( $d, $post_id );
+		$actual   = get_the_modified_date( $format, $post_id );
 		$this->assertEquals( $expected, $actual );
 	}
 
@@ -503,8 +503,8 @@ class Tests_General_Template extends WP_UnitTestCase {
 		$GLOBALS['post'] = $post;
 
 		$expected = '2016-01-21';
-		$d        = 'Y-m-d';
-		$actual   = get_the_modified_date( $d );
+		$format   = 'Y-m-d';
+		$actual   = get_the_modified_date( $format );
 		$this->assertEquals( $expected, $actual );
 	}
 
@@ -516,7 +516,7 @@ class Tests_General_Template extends WP_UnitTestCase {
 	 * @since 4.6.0
 	 */
 	function test_get_the_modified_date_failures_are_filtered() {
-		// Remove global post objet
+		// Remove global post object.
 		$GLOBALS['post'] = null;
 
 		$expected = 'filtered modified date failure result';
@@ -550,9 +550,9 @@ class Tests_General_Template extends WP_UnitTestCase {
 			'post_date_gmt' => '2016-01-21 15:34:36',
 		);
 		$post_id  = $this->factory->post->create( $details );
-		$d        = 'G';
+		$format   = 'G';
 		$expected = '1453390476';
-		$actual   = get_the_modified_time( $d, $post_id );
+		$actual   = get_the_modified_time( $format, $post_id );
 		$this->assertEquals( $expected, $actual );
 	}
 

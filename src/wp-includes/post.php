@@ -7,7 +7,7 @@
  */
 
 //
-// Post Type Registration
+// Post Type registration.
 //
 
 /**
@@ -30,6 +30,7 @@ function create_initial_post_types() {
 			'capability_type'       => 'post',
 			'map_meta_cap'          => true,
 			'menu_position'         => 5,
+			'menu_icon'             => 'dashicons-admin-post',
 			'hierarchical'          => false,
 			'rewrite'               => false,
 			'query_var'             => false,
@@ -54,6 +55,7 @@ function create_initial_post_types() {
 			'capability_type'       => 'page',
 			'map_meta_cap'          => true,
 			'menu_position'         => 20,
+			'menu_icon'             => 'dashicons-admin-page',
 			'hierarchical'          => true,
 			'rewrite'               => false,
 			'query_var'             => false,
@@ -85,6 +87,7 @@ function create_initial_post_types() {
 				'create_posts' => 'upload_files',
 			),
 			'map_meta_cap'          => true,
+			'menu_icon'             => 'dashicons-admin-media',
 			'hierarchical'          => false,
 			'rewrite'               => false,
 			'query_var'             => false,
@@ -673,15 +676,15 @@ function get_children( $args = '', $output = OBJECT ) {
 		$kids[ $child->ID ] = $children[ $key ];
 	}
 
-	if ( $output == OBJECT ) {
+	if ( OBJECT == $output ) {
 		return $kids;
-	} elseif ( $output == ARRAY_A ) {
+	} elseif ( ARRAY_A == $output ) {
 		$weeuns = array();
 		foreach ( (array) $kids as $kid ) {
 			$weeuns[ $kid->ID ] = get_object_vars( $kids[ $kid->ID ] );
 		}
 		return $weeuns;
-	} elseif ( $output == ARRAY_N ) {
+	} elseif ( ARRAY_N == $output ) {
 		$babes = array();
 		foreach ( (array) $kids as $kid ) {
 			$babes[ $kid->ID ] = array_values( get_object_vars( $kids[ $kid->ID ] ) );
@@ -715,7 +718,7 @@ function get_children( $args = '', $output = OBJECT ) {
  * }
  */
 function get_extended( $post ) {
-	//Match the new style more links.
+	// Match the new style more links.
 	if ( preg_match( '/<!--more(.*?)?-->/', $post, $matches ) ) {
 		list($main, $extended) = explode( $matches[0], $post, 2 );
 		$more_text             = $matches[1];
@@ -725,7 +728,7 @@ function get_extended( $post ) {
 		$more_text = '';
 	}
 
-	//  leading and trailing whitespace.
+	// Leading and trailing whitespace.
 	$main      = preg_replace( '/^[\s]*(.*)[\s]*$/', '\\1', $main );
 	$extended  = preg_replace( '/^[\s]*(.*)[\s]*$/', '\\1', $extended );
 	$more_text = preg_replace( '/^[\s]*(.*)[\s]*$/', '\\1', $more_text );
@@ -781,9 +784,9 @@ function get_post( $post = null, $output = OBJECT, $filter = 'raw' ) {
 
 	$_post = $_post->filter( $filter );
 
-	if ( $output == ARRAY_A ) {
+	if ( ARRAY_A == $output ) {
 		return $_post->to_array();
-	} elseif ( $output == ARRAY_N ) {
+	} elseif ( ARRAY_N == $output ) {
 		return array_values( $_post->to_array() );
 	}
 
@@ -1005,7 +1008,7 @@ function _wp_privacy_statuses() {
  *     @type bool|string $label                     A descriptive name for the post status marked
  *                                                  for translation. Defaults to value of $post_status.
  *     @type bool|array  $label_count               Descriptive text to use for nooped plurals.
- *                                                  Default array of $label, twice
+ *                                                  Default array of $label, twice.
  *     @type bool        $exclude_from_search       Whether to exclude posts with this post status
  *                                                  from search results. Default is value of $internal.
  *     @type bool        $_builtin                  Whether the status is built-in. Core-use only.
@@ -1021,11 +1024,12 @@ function _wp_privacy_statuses() {
  *     @type bool        $publicly_queryable        Whether posts with this status should be publicly-
  *                                                  queryable. Default is value of $public.
  *     @type bool        $show_in_admin_all_list    Whether to include posts in the edit listing for
- *                                                  their post type. Default is value of $internal.
+ *                                                  their post type. Default is the opposite value
+ *                                                  of $internal.
  *     @type bool        $show_in_admin_status_list Show in the list of statuses with post counts at
  *                                                  the top of the edit listings,
  *                                                  e.g. All (12) | Published (9) | My Custom Status (2)
- *                                                  Default is value of $internal.
+ *                                                  Default is the opposite value of $internal.
  *     @type bool        $date_floating             Whether the post has a floating creation date.
  *                                                  Default to false.
  * }
@@ -1395,7 +1399,7 @@ function get_post_types( $args = array(), $output = 'names', $operator = 'and' )
  *                                              ?{query_var_string}={post_slug} will be valid.
  *     @type bool        $can_export            Whether to allow this post type to be exported. Default true.
  *     @type bool        $delete_with_user      Whether to delete posts of this type when deleting a user. If true,
- *                                              posts of this type belonging to the user will be moved to trash
+ *                                              posts of this type belonging to the user will be moved to Trash
  *                                              when then user is deleted. If false, posts of this type belonging
  *                                              to the user will *not* be trashed or deleted. If not set (the default),
  *                                              posts are trashed if post_type_supports('author'). Otherwise posts
@@ -1415,7 +1419,7 @@ function register_post_type( $post_type, $args = array() ) {
 		$wp_post_types = array();
 	}
 
-	// Sanitize post type name
+	// Sanitize post type name.
 	$post_type = sanitize_key( $post_type );
 
 	if ( empty( $post_type ) || strlen( $post_type ) > 20 ) {
@@ -1557,7 +1561,7 @@ function get_post_type_capabilities( $args ) {
 	list( $singular_base, $plural_base ) = $args->capability_type;
 
 	$default_capabilities = array(
-		// Meta capabilities
+		// Meta capabilities.
 		'edit_post'          => 'edit_' . $singular_base,
 		'read_post'          => 'read_' . $singular_base,
 		'delete_post'        => 'delete_' . $singular_base,
@@ -1635,7 +1639,7 @@ function _post_type_meta_capabilities( $capabilities = null ) {
  * - `view_items` - Label for viewing post type archives. Default is 'View Posts' / 'View Pages'.
  * - `search_items` - Label for searching plural items. Default is 'Search Posts' / 'Search Pages'.
  * - `not_found` - Label used when no items are found. Default is 'No posts found' / 'No pages found'.
- * - `not_found_in_trash` - Label used when no items are in the trash. Default is 'No posts found in Trash' /
+ * - `not_found_in_trash` - Label used when no items are in the Trash. Default is 'No posts found in Trash' /
  *                        'No pages found in Trash'.
  * - `parent_item_colon` - Label used to prefix parents of hierarchical items. Not used on non-hierarchical
  *                       post types. Default is 'Parent Page:'.
@@ -1645,7 +1649,7 @@ function _post_type_meta_capabilities( $capabilities = null ) {
  * - `insert_into_item` - Label for the media frame button. Default is 'Insert into post' / 'Insert into page'.
  * - `uploaded_to_this_item` - Label for the media frame filter. Default is 'Uploaded to this post' /
  *                           'Uploaded to this page'.
- * - `featured_image` - Label for the Featured Image meta box title. Default is 'Featured Image'.
+ * - `featured_image` - Label for the featured image meta box title. Default is 'Featured image'.
  * - `set_featured_image` - Label for setting the featured image. Default is 'Set featured image'.
  * - `remove_featured_image` - Label for removing the featured image. Default is 'Remove featured image'.
  * - `use_featured_image` - Label in the media frame for using a featured image. Default is 'Use as featured image'.
@@ -1703,7 +1707,7 @@ function get_post_type_labels( $post_type_object ) {
 		'attributes'               => array( __( 'Post Attributes' ), __( 'Page Attributes' ) ),
 		'insert_into_item'         => array( __( 'Insert into post' ), __( 'Insert into page' ) ),
 		'uploaded_to_this_item'    => array( __( 'Uploaded to this post' ), __( 'Uploaded to this page' ) ),
-		'featured_image'           => array( _x( 'Featured Image', 'post' ), _x( 'Featured Image', 'page' ) ),
+		'featured_image'           => array( _x( 'Featured image', 'post' ), _x( 'Featured image', 'page' ) ),
 		'set_featured_image'       => array( _x( 'Set featured image', 'post' ), _x( 'Set featured image', 'page' ) ),
 		'remove_featured_image'    => array( _x( 'Remove featured image', 'post' ), _x( 'Remove featured image', 'page' ) ),
 		'use_featured_image'       => array( _x( 'Use as featured image', 'post' ), _x( 'Use as featured image', 'page' ) ),
@@ -1802,7 +1806,7 @@ function _add_post_type_submenus() {
 	foreach ( get_post_types( array( 'show_ui' => true ) ) as $ptype ) {
 		$ptype_obj = get_post_type_object( $ptype );
 		// Sub-menus only.
-		if ( ! $ptype_obj->show_in_menu || $ptype_obj->show_in_menu === true ) {
+		if ( ! $ptype_obj->show_in_menu || true === $ptype_obj->show_in_menu ) {
 			continue;
 		}
 		add_submenu_page( $ptype_obj->show_in_menu, $ptype_obj->labels->name, $ptype_obj->labels->all_items, $ptype_obj->cap->edit_posts, "edit.php?post_type=$ptype" );
@@ -2032,7 +2036,7 @@ function get_posts( $args = null ) {
 	}
 	if ( ! empty( $parsed_args['include'] ) ) {
 		$incposts                      = wp_parse_id_list( $parsed_args['include'] );
-		$parsed_args['posts_per_page'] = count( $incposts );  // only the number of posts included
+		$parsed_args['posts_per_page'] = count( $incposts );  // Only the number of posts included.
 		$parsed_args['post__in']       = $incposts;
 	} elseif ( ! empty( $parsed_args['exclude'] ) ) {
 		$parsed_args['post__not_in'] = wp_parse_id_list( $parsed_args['exclude'] );
@@ -2047,7 +2051,7 @@ function get_posts( $args = null ) {
 }
 
 //
-// Post meta functions
+// Post meta functions.
 //
 
 /**
@@ -2712,7 +2716,7 @@ function wp_count_attachments( $mime_type = '' ) {
  * @return array List of post mime types.
  */
 function get_post_mime_types() {
-	$post_mime_types = array(   //	array( adj, noun )
+	$post_mime_types = array(   // array( adj, noun )
 		'image'       => array(
 			__( 'Images' ),
 			__( 'Manage Images' ),
@@ -2922,8 +2926,8 @@ function wp_post_mime_type_where( $post_mime_types, $table_alias = '' ) {
  * it is deleted also. This includes comments, post meta fields, and terms
  * associated with the post.
  *
- * The post or page is moved to trash instead of permanently deleted unless
- * trash is disabled, item is already in the trash, or $force_delete is true.
+ * The post or page is moved to Trash instead of permanently deleted unless
+ * Trash is disabled, item is already in the Trash, or $force_delete is true.
  *
  * @since 1.0.0
  *
@@ -2932,7 +2936,7 @@ function wp_post_mime_type_where( $post_mime_types, $table_alias = '' ) {
  * @see wp_trash_post()
  *
  * @param int  $postid       Optional. Post ID. Default 0.
- * @param bool $force_delete Optional. Whether to bypass trash and force deletion.
+ * @param bool $force_delete Optional. Whether to bypass Trash and force deletion.
  *                           Default false.
  * @return WP_Post|false|null Post data on success, false or null on failure.
  */
@@ -2962,7 +2966,7 @@ function wp_delete_post( $postid = 0, $force_delete = false ) {
 	 *
 	 * @param bool|null $delete       Whether to go forward with deletion.
 	 * @param WP_Post   $post         Post object.
-	 * @param bool      $force_delete Whether to bypass the trash.
+	 * @param bool      $force_delete Whether to bypass the Trash.
 	 */
 	$check = apply_filters( 'pre_delete_post', null, $post, $force_delete );
 	if ( null !== $check ) {
@@ -3099,7 +3103,7 @@ function _reset_front_page_settings_for_post( $post_id ) {
 /**
  * Move a post or page to the Trash
  *
- * If trash is disabled, the post or page is permanently deleted.
+ * If Trash is disabled, the post or page is permanently deleted.
  *
  * @since 2.9.0
  *
@@ -3138,7 +3142,7 @@ function wp_trash_post( $post_id = 0 ) {
 	}
 
 	/**
-	 * Fires before a post is sent to the trash.
+	 * Fires before a post is sent to the Trash.
 	 *
 	 * @since 3.3.0
 	 *
@@ -3163,7 +3167,7 @@ function wp_trash_post( $post_id = 0 ) {
 	wp_trash_post_comments( $post_id );
 
 	/**
-	 * Fires after a post is sent to the trash.
+	 * Fires after a post is sent to the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3207,7 +3211,7 @@ function wp_untrash_post( $post_id = 0 ) {
 	}
 
 	/**
-	 * Fires before a post is restored from the trash.
+	 * Fires before a post is restored from the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3234,7 +3238,7 @@ function wp_untrash_post( $post_id = 0 ) {
 	wp_untrash_post_comments( $post_id );
 
 	/**
-	 * Fires after a post is restored from the trash.
+	 * Fires after a post is restored from the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3246,7 +3250,7 @@ function wp_untrash_post( $post_id = 0 ) {
 }
 
 /**
- * Moves comments for a post to the trash.
+ * Moves comments for a post to the Trash.
  *
  * @since 2.9.0
  *
@@ -3266,7 +3270,7 @@ function wp_trash_post_comments( $post = null ) {
 	$post_id = $post->ID;
 
 	/**
-	 * Fires before comments are sent to the trash.
+	 * Fires before comments are sent to the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3292,7 +3296,7 @@ function wp_trash_post_comments( $post = null ) {
 	clean_comment_cache( array_keys( $statuses ) );
 
 	/**
-	 * Fires after comments are sent to the trash.
+	 * Fires after comments are sent to the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3305,7 +3309,7 @@ function wp_trash_post_comments( $post = null ) {
 }
 
 /**
- * Restore comments for a post from the trash.
+ * Restore comments for a post from the Trash.
  *
  * @since 2.9.0
  *
@@ -3331,7 +3335,7 @@ function wp_untrash_post_comments( $post = null ) {
 	}
 
 	/**
-	 * Fires before comments are restored for a post from the trash.
+	 * Fires before comments are restored for a post from the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3359,7 +3363,7 @@ function wp_untrash_post_comments( $post = null ) {
 	delete_post_meta( $post_id, '_wp_trash_meta_comments_status' );
 
 	/**
-	 * Fires after comments are restored for a post from the trash.
+	 * Fires after comments are restored for a post from the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3839,7 +3843,20 @@ function wp_insert_post( $postarr, $wp_error = false ) {
 
 	// If a trashed post has the desired slug, change it and let this post have it.
 	if ( 'trash' !== $post_status && $post_name ) {
-		wp_add_trashed_suffix_to_post_name_for_trashed_posts( $post_name, $post_ID );
+		/**
+		 * Filters whether or not to add a `__trashed` suffix to trashed posts that match the name of the updated post.
+		 *
+		 * @since 5.4.0
+		 *
+		 * @param bool   $add_trashed_suffix Whether to attempt to add the suffix.
+		 * @param string $post_name          The name of the post being updated.
+		 * @param int    $post_ID            Post ID.
+		 */
+		$add_trashed_suffix = apply_filters( 'add_trashed_suffix_to_trashed_posts', true, $post_name, $post_ID );
+
+		if ( $add_trashed_suffix ) {
+			wp_add_trashed_suffix_to_post_name_for_trashed_posts( $post_name, $post_ID );
+		}
 	}
 
 	// When trashing an existing post, change its slug to allow non-trashed posts to use it.
@@ -4196,8 +4213,22 @@ function wp_update_post( $postarr = array(), $wp_error = false ) {
 		$postarr['post_date_gmt'] = '';
 	}
 
-	if ( $postarr['post_type'] == 'attachment' ) {
+	if ( 'attachment' === $postarr['post_type'] ) {
 		return wp_insert_attachment( $postarr, false, 0, $wp_error );
+	}
+
+	// Discard 'tags_input' parameter if it's the same as existing post tags.
+	if ( isset( $postarr['tags_input'] ) && is_object_in_taxonomy( $postarr['post_type'], 'post_tag' ) ) {
+		$tags      = get_the_terms( $postarr['ID'], 'post_tag' );
+		$tag_names = array();
+
+		if ( $tags && ! is_wp_error( $tags ) ) {
+			$tag_names = wp_list_pluck( $tags, 'name' );
+		}
+
+		if ( $postarr['tags_input'] === $tag_names ) {
+			unset( $postarr['tags_input'] );
+		}
 	}
 
 	return wp_insert_post( $postarr, $wp_error );
@@ -4273,7 +4304,7 @@ function check_and_publish_future_post( $post_id ) {
 
 	// Uh oh, someone jumped the gun!
 	if ( $time > time() ) {
-		wp_clear_scheduled_hook( 'publish_future_post', array( $post_id ) ); // clear anything else in the system
+		wp_clear_scheduled_hook( 'publish_future_post', array( $post_id ) ); // Clear anything else in the system.
 		wp_schedule_single_event( $time, 'publish_future_post', array( $post_id ) );
 		return;
 	}
@@ -4831,7 +4862,7 @@ function trackback_url_list( $tb_list, $post_id ) {
 }
 
 //
-// Page functions
+// Page functions.
 //
 
 /**
@@ -4942,7 +4973,7 @@ function get_page_by_path( $page_path, $output = OBJECT, $post_type = 'page' ) {
 			 * Loop through the given path parts from right to left,
 			 * ensuring each matches the post ancestry.
 			 */
-			while ( $p->post_parent != 0 && isset( $pages[ $p->post_parent ] ) ) {
+			while ( 0 != $p->post_parent && isset( $pages[ $p->post_parent ] ) ) {
 				$count++;
 				$parent = $pages[ $p->post_parent ];
 				if ( ! isset( $revparts[ $count ] ) || $parent->post_name != $revparts[ $count ] ) {
@@ -4951,7 +4982,7 @@ function get_page_by_path( $page_path, $output = OBJECT, $post_type = 'page' ) {
 				$p = $parent;
 			}
 
-			if ( $p->post_parent == 0 && $count + 1 == count( $revparts ) && $p->post_name == $revparts[ $count ] ) {
+			if ( 0 == $p->post_parent && count( $revparts ) == $count + 1 && $p->post_name == $revparts[ $count ] ) {
 				$foundid = $page->ID;
 				if ( $page->post_type == $post_type ) {
 					break;
@@ -5265,7 +5296,7 @@ function get_pages( $args = array() ) {
 
 	$inclusions = '';
 	if ( ! empty( $parsed_args['include'] ) ) {
-		$child_of     = 0; //ignore child_of, parent, exclude, meta_key, and meta_value params if using include
+		$child_of     = 0; // Ignore child_of, parent, exclude, meta_key, and meta_value params if using include.
 		$parent       = -1;
 		$exclude      = '';
 		$meta_key     = '';
@@ -5291,7 +5322,7 @@ function get_pages( $args = array() ) {
 
 		if ( ! empty( $post_authors ) ) {
 			foreach ( $post_authors as $post_author ) {
-				//Do we have an author id or an author login?
+				// Do we have an author id or an author login?
 				if ( 0 == intval( $post_author ) ) {
 					$post_author = get_user_by( 'login', $post_author );
 					if ( empty( $post_author ) ) {
@@ -5320,7 +5351,7 @@ function get_pages( $args = array() ) {
 	if ( '' !== $meta_key || '' !== $meta_value ) {
 		$join = " LEFT JOIN $wpdb->postmeta ON ( $wpdb->posts.ID = $wpdb->postmeta.post_id )";
 
-		// meta_key and meta_value might be slashed
+		// meta_key and meta_value might be slashed.
 		$meta_key   = wp_unslash( $meta_key );
 		$meta_value = wp_unslash( $meta_value );
 		if ( '' !== $meta_key ) {
@@ -5460,7 +5491,7 @@ function get_pages( $args = array() ) {
 
 	wp_cache_set( $cache_key, $page_structure, 'posts' );
 
-	// Convert to WP_Post instances
+	// Convert to WP_Post instances.
 	$pages = array_map( 'get_post', $pages );
 
 	/**
@@ -5475,7 +5506,7 @@ function get_pages( $args = array() ) {
 }
 
 //
-// Attachment functions
+// Attachment functions.
 //
 
 /**
@@ -5557,15 +5588,15 @@ function wp_insert_attachment( $args, $file = false, $parent = 0, $wp_error = fa
  * Deletion removes all post meta fields, taxonomy, comments, etc. associated
  * with the attachment (except the main post).
  *
- * The attachment is moved to the trash instead of permanently deleted unless trash
- * for media is disabled, item is already in the trash, or $force_delete is true.
+ * The attachment is moved to the Trash instead of permanently deleted unless Trash
+ * for media is disabled, item is already in the Trash, or $force_delete is true.
  *
  * @since 2.0.0
  *
  * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int  $post_id      Attachment ID.
- * @param bool $force_delete Optional. Whether to bypass trash and force deletion.
+ * @param bool $force_delete Optional. Whether to bypass Trash and force deletion.
  *                           Default false.
  * @return WP_Post|false|null Post data on success, false or null on failure.
  */
@@ -5832,7 +5863,7 @@ function wp_get_attachment_url( $attachment_id = 0 ) {
 				// Replace file location with url location.
 				$url = str_replace( $uploads['basedir'], $uploads['baseurl'], $file );
 			} elseif ( false !== strpos( $file, 'wp-content/uploads' ) ) {
-				// Get the directory name relative to the basedir (back compat for pre-2.7 uploads)
+				// Get the directory name relative to the basedir (back compat for pre-2.7 uploads).
 				$url = trailingslashit( $uploads['baseurl'] . '/' . _wp_get_attachment_relative_path( $file ) ) . wp_basename( $file );
 			} else {
 				// It's a newly-uploaded file, therefore $file is relative to the basedir.
@@ -6352,8 +6383,8 @@ function get_posts_by_author_sql( $post_type, $full = true, $post_author = null,
 					$post_status_sql .= " OR post_status = 'private' AND post_author = $id";
 				} elseif ( $id == (int) $post_author ) {
 					$post_status_sql .= " OR post_status = 'private'";
-				} // else none
-			} // else none
+				} // Else none.
+			} // Else none.
 		}
 
 		$post_type_clauses[] = "( post_type = '" . $post_type . "' AND ( $post_status_sql ) )";
@@ -6711,7 +6742,7 @@ function clean_attachment_cache( $id, $clean_terms = false ) {
 }
 
 //
-// Hooks
+// Hooks.
 //
 
 /**
@@ -6730,7 +6761,7 @@ function clean_attachment_cache( $id, $clean_terms = false ) {
 function _transition_post_status( $new_status, $old_status, $post ) {
 	global $wpdb;
 
-	if ( $old_status != 'publish' && $new_status == 'publish' ) {
+	if ( 'publish' !== $old_status && 'publish' === $new_status ) {
 		// Reset GUID if transitioning to publish and it is empty.
 		if ( '' == get_the_guid( $post->ID ) ) {
 			$wpdb->update( $wpdb->posts, array( 'guid' => get_permalink( $post->ID ) ), array( 'ID' => $post->ID ) );
@@ -6873,7 +6904,7 @@ function wp_check_post_hierarchy_for_loops( $post_parent, $post_ID ) {
 	// Now look for larger loops.
 	$loop = wp_find_hierarchy_loop( 'wp_get_post_parent_id', $post_ID, $post_parent );
 	if ( ! $loop ) {
-		return $post_parent; // No loop
+		return $post_parent; // No loop.
 	}
 
 	// Setting $post_parent to the given value causes a loop.
@@ -7160,17 +7191,19 @@ function get_available_post_mime_types( $type = 'attachment' ) {
  * to the originally uploaded image file.
  *
  * @since 5.3.0
+ * @since 5.4.0 Added the `$unfiltered` parameter.
  *
- * @param int $attachment_id Attachment ID.
+ * @param int  $attachment_id Attachment ID.
+ * @param bool $unfiltered Optional. Passed through to `get_attached_file()`. Default false.
  * @return string|false Path to the original image file or false if the attachment is not an image.
  */
-function wp_get_original_image_path( $attachment_id ) {
+function wp_get_original_image_path( $attachment_id, $unfiltered = false ) {
 	if ( ! wp_attachment_is_image( $attachment_id ) ) {
 		return false;
 	}
 
 	$image_meta = wp_get_attachment_metadata( $attachment_id );
-	$image_file = get_attached_file( $attachment_id );
+	$image_file = get_attached_file( $attachment_id, $unfiltered );
 
 	if ( empty( $image_meta['original_image'] ) ) {
 		$original_image = $image_file;

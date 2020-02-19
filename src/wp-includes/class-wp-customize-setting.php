@@ -497,7 +497,7 @@ class WP_Customize_Setting {
 	 *
 	 * @since 3.4.0
 	 *
-	 * @return false|void False if cap check fails or value isn't set or is invalid.
+	 * @return void|false False if cap check fails or value isn't set or is invalid.
 	 */
 	final public function save() {
 		$value = $this->post_value();
@@ -861,7 +861,7 @@ class WP_Customize_Setting {
 
 		if ( $create ) {
 			if ( ! is_array( $node ) ) {
-				// account for an array overriding a string or object value
+				// Account for an array overriding a string or object value.
 				$node = array();
 			}
 			if ( ! isset( $node[ $last ] ) ) {
@@ -943,24 +943,24 @@ class WP_Customize_Setting {
 /**
  * WP_Customize_Filter_Setting class.
  */
-require_once( ABSPATH . WPINC . '/customize/class-wp-customize-filter-setting.php' );
+require_once ABSPATH . WPINC . '/customize/class-wp-customize-filter-setting.php';
 
 /**
  * WP_Customize_Header_Image_Setting class.
  */
-require_once( ABSPATH . WPINC . '/customize/class-wp-customize-header-image-setting.php' );
+require_once ABSPATH . WPINC . '/customize/class-wp-customize-header-image-setting.php';
 
 /**
  * WP_Customize_Background_Image_Setting class.
  */
-require_once( ABSPATH . WPINC . '/customize/class-wp-customize-background-image-setting.php' );
+require_once ABSPATH . WPINC . '/customize/class-wp-customize-background-image-setting.php';
 
 /**
  * WP_Customize_Nav_Menu_Item_Setting class.
  */
-require_once( ABSPATH . WPINC . '/customize/class-wp-customize-nav-menu-item-setting.php' );
+require_once ABSPATH . WPINC . '/customize/class-wp-customize-nav-menu-item-setting.php';
 
 /**
  * WP_Customize_Nav_Menu_Setting class.
  */
-require_once( ABSPATH . WPINC . '/customize/class-wp-customize-nav-menu-setting.php' );
+require_once ABSPATH . WPINC . '/customize/class-wp-customize-nav-menu-setting.php';

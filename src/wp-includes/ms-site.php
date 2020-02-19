@@ -717,7 +717,7 @@ function wp_initialize_site( $site_id, array $args = array() ) {
 		switch_to_blog( $site->id );
 	}
 
-	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 	// Set up the database tables.
 	make_db_current_silent( 'blog' );
@@ -761,8 +761,8 @@ function wp_initialize_site( $site_id, array $args = array() ) {
 
 	// Remove all permissions that may exist for the site.
 	$table_prefix = $wpdb->get_blog_prefix();
-	delete_metadata( 'user', 0, $table_prefix . 'user_level', null, true ); // delete all
-	delete_metadata( 'user', 0, $table_prefix . 'capabilities', null, true ); // delete all
+	delete_metadata( 'user', 0, $table_prefix . 'user_level', null, true );   // Delete all.
+	delete_metadata( 'user', 0, $table_prefix . 'capabilities', null, true ); // Delete all.
 
 	// Install default site content.
 	wp_install_defaults( $args['user_id'] );
@@ -863,7 +863,7 @@ function wp_uninitialize_site( $site_id ) {
 	$index   = 0;
 
 	while ( $index < count( $stack ) ) {
-		// Get indexed directory from stack
+		// Get indexed directory from stack.
 		$dir = $stack[ $index ];
 
 		// phpcs:disable WordPress.PHP.NoSilencedErrors.Discouraged
@@ -889,7 +889,7 @@ function wp_uninitialize_site( $site_id ) {
 		$index++;
 	}
 
-	$stack = array_reverse( $stack ); // Last added dirs are deepest
+	$stack = array_reverse( $stack ); // Last added directories are deepest.
 	foreach ( (array) $stack as $dir ) {
 		if ( $dir != $top_dir ) {
 			@rmdir( $dir );
@@ -932,7 +932,8 @@ function wp_is_site_initialized( $site_id ) {
 	 *
 	 * @since 5.1.0
 	 *
-	 * @param bool|null $pre     The value to return, if not null.
+	 * @param bool|null $pre     The value to return instead. Default null
+	 *                           to continue with the check.
 	 * @param int       $site_id The site ID that is being checked.
 	 */
 	$pre = apply_filters( 'pre_wp_is_site_initialized', null, $site_id );

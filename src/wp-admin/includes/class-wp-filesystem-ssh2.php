@@ -64,7 +64,7 @@ class WP_Filesystem_SSH2 extends WP_Filesystem_Base {
 		$this->method = 'ssh2';
 		$this->errors = new WP_Error();
 
-		//Check if possible to use ssh2 functions.
+		// Check if possible to use ssh2 functions.
 		if ( ! extension_loaded( 'ssh2' ) ) {
 			$this->errors->add( 'no_ssh2_ext', __( 'The ssh2 PHP extension is not available' ) );
 			return;
@@ -238,7 +238,7 @@ class WP_Filesystem_SSH2 extends WP_Filesystem_Base {
 			fclose( $stream );
 
 			if ( $returnbool ) {
-				return ( $data === false ) ? false : '' != trim( $data );
+				return ( false === $data ) ? false : '' != trim( $data );
 			} else {
 				return $data;
 			}
@@ -285,7 +285,7 @@ class WP_Filesystem_SSH2 extends WP_Filesystem_Base {
 	public function put_contents( $file, $contents, $mode = false ) {
 		$ret = file_put_contents( $this->sftp_path( $file ), $contents );
 
-		if ( $ret !== strlen( $contents ) ) {
+		if ( strlen( $contents ) !== $ret ) {
 			return false;
 		}
 
@@ -582,7 +582,7 @@ class WP_Filesystem_SSH2 extends WP_Filesystem_Base {
 	 * @return bool Whether $file is writable.
 	 */
 	public function is_writable( $file ) {
-		// PHP will base it's writable checks on system_user === file_owner, not ssh_user === file_owner
+		// PHP will base its writable checks on system_user === file_owner, not ssh_user === file_owner.
 		return true;
 	}
 
@@ -737,7 +737,7 @@ class WP_Filesystem_SSH2 extends WP_Filesystem_Base {
 			$struc['name'] = $entry;
 
 			if ( '.' == $struc['name'] || '..' == $struc['name'] ) {
-				continue; //Do not care about these folders.
+				continue; // Do not care about these folders.
 			}
 
 			if ( ! $include_hidden && '.' == $struc['name'][0] ) {

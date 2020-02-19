@@ -9,9 +9,9 @@
 define( 'WP_INSTALLING', true );
 
 /** Sets up the WordPress Environment. */
-require( dirname( __FILE__ ) . '/wp-load.php' );
+require __DIR__ . '/wp-load.php';
 
-require( dirname( __FILE__ ) . '/wp-blog-header.php' );
+require __DIR__ . '/wp-blog-header.php';
 
 if ( ! is_multisite() ) {
 	wp_redirect( wp_registration_url() );
@@ -68,7 +68,7 @@ if ( is_object( $wp_object_cache ) ) {
 	$wp_object_cache->cache_enabled = false;
 }
 
-// Fix for page title
+// Fix for page title.
 $wp_query->is_404 = false;
 
 /**

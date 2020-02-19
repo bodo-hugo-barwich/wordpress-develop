@@ -8,7 +8,7 @@
  */
 
 if ( ! class_exists( 'Requests' ) ) {
-	require( ABSPATH . WPINC . '/class-requests.php' );
+	require ABSPATH . WPINC . '/class-requests.php';
 
 	Requests::register_autoloader();
 	Requests::set_certificate_path( ABSPATH . WPINC . '/certificates/ca-bundle.crt' );
@@ -226,8 +226,8 @@ class WP_Http {
 		 *
 		 * @since 2.7.0
 		 *
-		 * @param array  $parsed_args   An array of HTTP request arguments.
-		 * @param string $url The request URL.
+		 * @param array  $parsed_args An array of HTTP request arguments.
+		 * @param string $url         The request URL.
 		 */
 		$parsed_args = apply_filters( 'http_request_args', $parsed_args, $url );
 
@@ -485,7 +485,7 @@ class WP_Http {
 	 */
 	public static function browser_redirect_compatibility( $location, $headers, $data, &$options, $original ) {
 		// Browser compatibility.
-		if ( $original->status_code === 302 ) {
+		if ( 302 === $original->status_code ) {
 			$options['type'] = Requests::GET;
 		}
 	}
@@ -651,7 +651,12 @@ class WP_Http {
 	 * @since 2.7.0
 	 *
 	 * @param string $strResponse The full response string.
-	 * @return array Array with 'headers' and 'body' keys.
+	 * @return array {
+	 *     Array with response headers and body.
+	 *
+	 *     @type string $headers HTTP response headers.
+	 *     @type string $body    HTTP response body.
+	 * }
 	 */
 	public static function processResponse( $strResponse ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
 		$res = explode( "\r\n\r\n", $strResponse, 2 );
@@ -943,15 +948,15 @@ class WP_Http {
 			return $maybe_relative_path;
 		}
 
-		// Check for a scheme on the 'relative' url
+		// Check for a scheme on the 'relative' URL.
 		if ( ! empty( $relative_url_parts['scheme'] ) ) {
 			return $maybe_relative_path;
 		}
 
 		$absolute_path = $url_parts['scheme'] . '://';
 
-		// Schemeless URLs will make it this far, so we check for a host in the relative url
-		// and convert it to a protocol-url
+		// Schemeless URLs will make it this far, so we check for a host in the relative URL
+		// and convert it to a protocol-URL.
 		if ( isset( $relative_url_parts['host'] ) ) {
 			$absolute_path .= $relative_url_parts['host'];
 			if ( isset( $relative_url_parts['port'] ) ) {
@@ -964,7 +969,7 @@ class WP_Http {
 			}
 		}
 
-		// Start off with the Absolute URL path.
+		// Start off with the absolute URL path.
 		$path = ! empty( $url_parts['path'] ) ? $url_parts['path'] : '/';
 
 		// If it's a root-relative path, then great.
@@ -988,7 +993,7 @@ class WP_Http {
 			$path = preg_replace( '!^/(\.\./)+!', '', $path );
 		}
 
-		// Add the Query string.
+		// Add the query string.
 		if ( ! empty( $relative_url_parts['query'] ) ) {
 			$path .= '?' . $relative_url_parts['query'];
 		}
@@ -1004,8 +1009,8 @@ class WP_Http {
 	 * @param string $url      The URL which was requested.
 	 * @param array  $args     The arguments which were used to make the request.
 	 * @param array  $response The response of the HTTP request.
-	 * @return false|WP_Error|array False if no redirect is present, a WP_Error object if there's an error, or an HTTP
-	 *                              API response array if the redirect is successfully followed.
+	 * @return array|false|WP_Error An HTTP API response array if the redirect is successfully followed,
+	 *                              false if no redirect is present, or a WP_Error object if there's an error.
 	 */
 	public static function handle_redirects( $url, $args, $response ) {
 		// If no redirects are present, or, redirects were not requested, perform no action.
